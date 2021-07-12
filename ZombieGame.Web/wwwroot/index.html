@@ -2,32 +2,72 @@
 <html lang="en">
 <head>
     <title>Zombie Game V-0.1</title>
-    <link rel="stylesheet" href="lib/bootstrap-4.6.0/css/bootstrap.min.css">
+    <link rel="stylesheet" href="lib/bootstrap-5.0.2/css/bootstrap.min.css">
     <link rel="stylesheet" href="css/style.css">
-
+    <script src="lib/bootstrap-5.0.2/js/bootstrap.min.js"></script>
     <script src="lib/vue/vue.min.js"></script>
     <script src="lib/signalr/signalr.min.js"></script>
     <script src="lib/axios/axios.min.js"></script>
-    <script src="lib/bootstrap-4.6.0/js/bootstrap.min.js"></script>
-
-    <script src="js/app.js"></script>
-    
 </head>
 <body>
     <div class="p-5" id="vue-wrapper">
-        <div class="" v-if="viewState==='nick'">
-            <div class="card mx-auto mt-5">
-                <div class="card-body px-4 text-center">
-                    <h5 class="alert-danger">Enter Nickname:</h5>
-                </div>
+        <div v-if="viewState=== 'loading'">
+            <h3 class="my-auto mx-auto">
+                Loading...
+            </h3>
+        </div>
+        <div class="mx-auto mt-2" v-if="viewState==='nick'">
+            <div class="nick-card card mx-auto mt-5">
+                <div class="card-body px-3 text-center">
+                    <h5>Enter Nickname:</h5>
+                    <input class="form-control mt-2" type="text" v-model="nick" placeholder="Enter Nickname">
 
-                <input class="form-control mt-2" type="text" v-model="nick" placeholder="Enter Nickname">
-                
-                <button class="btn btn-danger mt-3" v-on:click="nickInput()">
-                </button>
+                    <button class="btn btn-danger mt-3" v-on:click="setPlayerName()">
+                        Enter Game
+                    </button>
+                    
+                </div>
+            </div>
+        </div>
+        <div class="mx-auto mt-2" v-if="viewState === 'gameRooms'">
+            <div class="row">
+                <div class="col-xl-8 col-lg-10 col-12 mx-auto">
+                    <div class="row mx-3">
+                        <div class="col-12 border p-4 d-flex">
+                            <button class="btn btn-outline-success ms-auto" type="button" data-bs-toggle="modal" data-bs-target="#gameRoomModal">
+                                Create Room
+                            </button>
+                        </div>
+                        <div class="col-12 border p-4 d-flex" v-for="room in gameRooms">
+                            ${room.name}}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- Create Game Room Modal -->
+        <div class="modal" id="gameRoomModal" tabindex="-1" role="dialog" aria-labelledby="gameRoomModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Create Game Room</h5>
+                        <button type="button" class="btn-close" data-bs-dissmiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <input type="text" class="form-control mt-2" v-model="newRoomName" placeholder="Game Room Name">
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-outline-secondary" data-bs-dissmiss="modal">
+                            Close
+                        </button>
+                        <button type="button" class="btn btn-outline-success" v-on:click="gameRoomActions('CreateGame',newRoomName)">
+                            Create
+                        </button>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
-
 </body>
+    <script src="js/app.js"></script>
 </html>

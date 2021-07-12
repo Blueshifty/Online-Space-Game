@@ -8,9 +8,10 @@
         public int PosX { get; set;}
         public int PosY { get; set; }
 
-        public Player(string name)
+        public Player(string name, string connectionId)
         {
             Name = name;
+            ConnectionId = connectionId;
         }
     }
 }

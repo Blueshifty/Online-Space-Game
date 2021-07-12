@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.SignalR;
@@ -133,7 +135,9 @@ namespace ZombieGame.Business.Hubs
                     var player = Connections[Context.ConnectionId];
                     
                     var gameRoom = new GameRoom(roomName, Context.ConnectionId, 10, 2);
-
+                    
+                    GameRooms.Add(gameRoom.Id, gameRoom);
+                    
                     player.CurrentRoomId = gameRoom.Id;
                     
                     await Groups.AddToGroupAsync(Context.ConnectionId, gameRoom.Id);
@@ -157,9 +161,9 @@ namespace ZombieGame.Business.Hubs
                 }
                 else
                 {
-                    Connections[Context.ConnectionId] = new Player(playerName);
+                    Connections[Context.ConnectionId] = new Player(playerName, Context.ConnectionId);
                     
-                    await Clients.Caller.SendAsync("getGames");
+                    await Clients.Caller.SendAsync("getGameRooms");
                 }
             }
             catch (Exception ex)
@@ -173,9 +177,9 @@ namespace ZombieGame.Business.Hubs
             await Groups.RemoveFromGroupAsync(Context.ConnectionId, roomId);
         }
         
-        public static IEnumerable<GameRoom> GetGameRooms()
+        public IEnumerable<RoomOnDashboardDto> GetGameRooms()
         {
-            return GameRooms.Values;
+            return _mapper.Map<List<GameRoom>, List<RoomOnDashboardDto>>(GameRooms.Values.ToList());
         }
 
         public async Task GameRoomAction(RoomActionDto roomActionDto)

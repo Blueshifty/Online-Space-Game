@@ -20,7 +20,7 @@ namespace ZombieGame.Business.Hubs.HubModels
         public GameRoom(string name, string creatorId, int playerCount, int size)
         {
             Name = name;
-            Id = new Guid().ToString();
+            Id = Guid.NewGuid().ToString();
             CreatorId = creatorId;
             PlayerCount = playerCount;
             CreatedAt = DateTime.Now;
