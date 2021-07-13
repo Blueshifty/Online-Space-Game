@@ -11,7 +11,7 @@
 </head>
 <body>
     <div class="p-5" id="vue-wrapper">
-        <div v-if="viewState=== 'loading'">
+        <div v-if="viewState==='loading'">
             <h3 class="my-auto mx-auto">
                 Loading...
             </h3>
@@ -21,8 +21,7 @@
                 <div class="card-body px-3 text-center">
                     <h5>Enter Nickname:</h5>
                     <input class="form-control mt-2" type="text" v-model="nick" placeholder="Enter Nickname">
-
-                    <button class="btn btn-danger mt-3" v-on:click="setPlayerName()">
+                    <button class="btn btn-danger mt-3" v-on:click="setName()">
                         Enter Game
                     </button>
                     
@@ -33,36 +32,44 @@
             <div class="row">
                 <div class="col-xl-8 col-lg-10 col-12 mx-auto">
                     <div class="row mx-3">
-                        <div class="col-12 border p-4 d-flex">
-                            <button class="btn btn-outline-success ms-auto" type="button" data-bs-toggle="modal" data-bs-target="#gameRoomModal">
-                                Create Room
-                            </button>
-                        </div>
                         <div class="col-12 border p-4 d-flex" v-for="room in gameRooms">
-                            ${room.name}}
+                            <div class="me-auto">
+                                ${room.name}}
+                            </div>
+                            <div class="ms-auto">
+                                <button class="btn btn-outline-success" type="button" v-on:click="joinGame(room.id)" >Join Game</button>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
-        <!-- Create Game Room Modal -->
-        <div class="modal" id="gameRoomModal" tabindex="-1" role="dialog" aria-labelledby="gameRoomModalLabel" aria-hidden="true">
-            <div class="modal-dialog modal-dialog-centered" role="document">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title">Create Game Room</h5>
-                        <button type="button" class="btn-close" data-bs-dissmiss="modal" aria-label="Close"></button>
-                    </div>
-                    <div class="modal-body">
-                        <input type="text" class="form-control mt-2" v-model="newRoomName" placeholder="Game Room Name">
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-outline-secondary" data-bs-dissmiss="modal">
-                            Close
+        <div class="mx-auto mt-2" v-if="viewState==='inGame'">
+            <div class="row">
+                <div class="col-2 mx-auto">
+                    <button class="btn btn-success" v-on:click="sendMove(8)">
+                        UP
+                    </button>
+                </div>
+                <div class="row">
+                    <div class="col-2 ms-auto">
+                        <button class="btn btn-success" v-on:click="sendMove(4)">
+                            LEFT
                         </button>
-                        <button type="button" class="btn btn-outline-success" v-on:click="gameRoomActions('CreateGame',newRoomName)">
-                            Create
+                    </div>
+                    <div class="col-2">
+                    </div>
+                    <div class="col-2 me-auto">
+                        <button class="btn btn-success" v-on:click="sendMove(6)">
+                            RIGHT
                         </button>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-2 mx-auto">
+                        <button class="btn btn-success" v-on:click="sendMove(2)">
+                            DOWN
+                        </button>  
                     </div>
                 </div>
             </div>

@@ -1,37 +1,27 @@
 ﻿using System;
+using System.Collections.Generic;
 
 namespace ZombieGame.Business.Hubs.HubModels
 {
     public class GameRoom
     {
         public string Id { get; }
-
-        public DateTime CreatedAt { get; }
-        public string CreatorId { get; set; }
-        
         public int PlayerCount { get; set; }
-        
+        public int CurrentPlayerCount { get; set; }
+
+        public Dictionary<string, Player> Players { get; set; }
         public string Name { get; set;}
 
         public int[,] Map { get; set; }
-
-        public GameStatus Status { get; set; }
-
-        public GameRoom(string name, string creatorId, int playerCount, int size)
+        
+        public GameRoom(string name,int playerCount, int size)
         {
             Name = name;
             Id = Guid.NewGuid().ToString();
-            CreatorId = creatorId;
             PlayerCount = playerCount;
-            CreatedAt = DateTime.Now;
             Map = new int[size * 100, size * 100];
-            Status = GameStatus.Waiting;
-        }
-        public enum GameStatus
-        {
-            Waiting,
-            Started,
-            Ended
+            CurrentPlayerCount = 0;
+            Players = new Dictionary<string, Player>();
         }
     }
 }

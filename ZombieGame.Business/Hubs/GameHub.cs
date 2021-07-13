@@ -1,8 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Runtime.CompilerServices;
-using System.Text.RegularExpressions;
+using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.SignalR;
 using ZombieGame.Business.DTOs.Request;
@@ -16,20 +15,33 @@ namespace ZombieGame.Business.Hubs
     {
         private readonly IMapper _mapper;
         
-        private static readonly Dictionary<string, Player> Connections = new();
+        private static readonly Dictionary<string, string> PlayerRoomMap = new();
 
         private static readonly Dictionary<string, GameRoom> GameRooms = new();
-        
-        public GameHub(IMapper mapper)
+
+        public static IHubContext<GameHub> HubContext;
+
+        public static Timer Internal;
+
+        public GameHub( IHubContext<GameHub> hubContext,IMapper mapper)
         {
             _mapper = mapper;
+            HubContext = hubContext;
         }
 
+        private static void GameLoop(object? state)
+        {
+            foreach (var gameRoom in GameRooms)
+            {
+                HubContext.Clients.Group(gameRoom.Key).SendAsync("update", gameRoom.Value.Players.Values);
+            }
+        }
+        
         public async Task SendMove(MoveDto move)
         {
             try
             {
-                var player = Connections[Context.ConnectionId];
+                var player = GameRooms[PlayerRoomMap[Context.ConnectionId]].Players[Context.ConnectionId];
                 
                 var oldPosX = player.PosX;
 
@@ -72,15 +84,6 @@ namespace ZombieGame.Business.Hubs
                     player.PosX = oldPosX;
                     player.PosY = oldPosY;
                 }
-                else
-                {
-                    await Clients.Group(player.CurrentRoomId).SendAsync("playerMoveUpdate", new PlayerPosition()
-                    {
-                        PlayerName = player.Name,
-                        PosX = player.PosX,
-                        PosY = player.PosY
-                    });
-                }
             }
             catch(Exception ex)
             {
@@ -88,25 +91,23 @@ namespace ZombieGame.Business.Hubs
             }
         }
         
-        public async Task JoinGame(string roomId)
+        public async Task JoinGame(JoinDto joinDto)
         {
             try
             {
-                var player = Connections[Context.ConnectionId];
+                var player = new Player(joinDto.Name);
 
-                if (player != null && player.CurrentRoomId != roomId)
+                PlayerRoomMap[Context.ConnectionId] = joinDto.RoomId;
+
+                var gameRoom = GameRooms[joinDto.RoomId];
+                
+                if (gameRoom.CurrentPlayerCount < gameRoom.PlayerCount)
                 {
+                    await Groups.AddToGroupAsync(Context.ConnectionId, joinDto.RoomId);
 
-                    if (player.CurrentRoomId != null)
-                    {
-                        await Leave(player.CurrentRoomId);
-                    }
-
-                    await Groups.AddToGroupAsync(Context.ConnectionId, roomId);
-
-                    player.CurrentRoomId = roomId;
-
-                    await Clients.OthersInGroup(roomId).SendAsync("addPlayer", player);
+                    gameRoom.Players[Context.ConnectionId] = player;
+                    
+                    gameRoom.CurrentPlayerCount++;
                 }
             }
             catch (Exception ex)
@@ -114,96 +115,25 @@ namespace ZombieGame.Business.Hubs
                 await Clients.Caller.SendAsync("onError", "You failed to join game room" + ex.Message);
             }
         }
-
-        public async Task CreateGame(string roomName)
-        {
-            try
-            {
-                var match = Regex.Match(roomName, @"^\w+( \w+)*$");
-
-                if (!match.Success)
-                {
-                    await Clients.Caller.SendAsync("onError",
-                        "Invalid room name, room name must contain only letters and numbers");
-                }
-                else if (roomName.Length < 5 || roomName.Length > 100)
-                {
-                    await Clients.Caller.SendAsync("onError", "Room name must be between 5-100 characters!");
-                }
-                else
-                {
-                    var player = Connections[Context.ConnectionId];
-                    
-                    var gameRoom = new GameRoom(roomName, Context.ConnectionId, 10, 2);
-                    
-                    GameRooms.Add(gameRoom.Id, gameRoom);
-                    
-                    player.CurrentRoomId = gameRoom.Id;
-                    
-                    await Groups.AddToGroupAsync(Context.ConnectionId, gameRoom.Id);
-
-                    await Clients.Caller.SendAsync("CreatedGameRoom", gameRoom);
-                }
-            }
-            catch(Exception ex)
-            {
-                await Clients.Caller.SendAsync("onError", "Couldn't create game room : " + ex.Message);
-            }
-        }
-
-        public async Task SetPlayerName(string playerName)
-        {
-            try
-            {
-                if (Connections.ContainsKey(playerName))
-                {
-                    await Clients.Caller.SendAsync("Name is Already Taken");
-                }
-                else
-                {
-                    Connections[Context.ConnectionId] = new Player(playerName, Context.ConnectionId);
-                    
-                    await Clients.Caller.SendAsync("getGameRooms");
-                }
-            }
-            catch (Exception ex)
-            {
-                await Clients.Caller.SendAsync("onError", "Cant set name : " + ex.Message);
-            }
-        }
-
+        
         public async Task Leave(string roomId)
         {
+            GameRooms[PlayerRoomMap[Context.ConnectionId]].Players.Remove(Context.ConnectionId);
             await Groups.RemoveFromGroupAsync(Context.ConnectionId, roomId);
         }
-        
         public IEnumerable<RoomOnDashboardDto> GetGameRooms()
         {
-            return _mapper.Map<List<GameRoom>, List<RoomOnDashboardDto>>(GameRooms.Values.ToList());
-        }
-
-        public async Task GameRoomAction(RoomActionDto roomActionDto)
-        {
-            var gameRoom = GameRooms[roomActionDto.RoomId];
-            
-            if (gameRoom != null && gameRoom.CreatorId == Context.ConnectionId)
+            //Init rooms if not exists.
+            if (GameRooms.Values.Count == 0)
             {
-                switch (roomActionDto.Action)
+                for (var i = 1; i <= 10; ++i)
                 {
-                    case RoomActionDto.GameRoomAction.Delete:
-                        break;
-                    case RoomActionDto.GameRoomAction.Start:
-                        gameRoom.Status = GameRoom.GameStatus.Started;
-                        await Clients.Group(gameRoom.Id).SendAsync("gameStarted");
-                        break;
-                    case RoomActionDto.GameRoomAction.KickPlayer:
-                        break;
-                    case RoomActionDto.GameRoomAction.ChangeName:
-                        break;
-                    default:
-                        break;
+                    var gameRoom = new GameRoom($"Game Room {i}", i * 10, i*10);
+                    GameRooms[gameRoom.Id] = gameRoom;
                 }
+                Internal = new Timer(GameLoop, null, TimeSpan.FromMilliseconds(76), TimeSpan.FromMilliseconds(75));
             }
+            return _mapper.Map<List<GameRoom>, List<RoomOnDashboardDto>>(GameRooms.Values.ToList());
         }
         
         private string GetDevice()

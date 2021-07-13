@@ -5,5 +5,6 @@
         public string Id { get; set; }
         public string Name { get; set; }
         public int PlayerCount { get; set; }
+        public int CurrentPlayerCount { get; set; }
     }
 }
