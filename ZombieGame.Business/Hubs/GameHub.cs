@@ -131,7 +131,7 @@ namespace ZombieGame.Business.Hubs
                     var gameRoom = new GameRoom($"Game Room {i}", i * 10, i*10);
                     GameRooms[gameRoom.Id] = gameRoom;
                 }
-                Internal = new Timer(GameLoop, null, TimeSpan.FromMilliseconds(76), TimeSpan.FromMilliseconds(75));
+                Internal = new Timer(GameLoop, null, TimeSpan.Zero, TimeSpan.FromMilliseconds(75));
             }
             return _mapper.Map<List<GameRoom>, List<RoomOnDashboardDto>>(GameRooms.Values.ToList());
         }
