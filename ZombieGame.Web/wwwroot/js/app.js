@@ -11,6 +11,14 @@ const vue = new Vue({
             gameRooms: [],
             newRoomName: null,
             currentRoom: null,
+            gameContext : null,
+            players: [],
+            player: null,
+            playerController: null,
+            up:false,
+            right:false,
+            down:false,
+            left:false
         },
         methods: {
             startConnection: async function () {
@@ -37,27 +45,34 @@ const vue = new Vue({
                     console.log(playerMove);
                 });
                 this.connection.on("update", (players) => {
+                    this.player = players.find(p => p.name === this.nick);
+                    this.players = players.filter(p => p.name !== this.nick);
+                    window.requestAnimationFrame(this.gameLoop);
                     //console.log(players);
                 });
             },
-            sendMove(towards){
+            sendMove: function(towards){
+                console.log(towards);
                 this.connection.invoke("SendMove", {Towards: towards}).then(response => {
-                    console.log(response);
+                    //console.log(response);
                 })
             },
-            joinGame(id){
+            joinGame: function(id){
               this.connection.invoke('JoinGame', {name:this.nick, roomId:id}).then(response => {
                   console.log(response);
                   this.viewState = 'inGame';
+                  this.$nextTick(() => {
+                      this.initGame();
+                  })
               });
             },
-            getGameRooms(){
+            getGameRooms: function(){
               this.connection.invoke("GetGameRooms").then(response => {
                   console.log(response);
                   this.gameRooms = response;
               })  
             },
-            setName() {
+            setName: function(){
                 if (this.nick.length > 1 || this.nick.length < 50) {
                     this.viewState = 'gameRooms';
                     this.getGameRooms();
@@ -72,6 +87,74 @@ const vue = new Vue({
                 this.connection.onclose(this.startConnection);
 
                 await this.startConnection();
+            },
+            initGame: function(){
+                this.gameContext = document.querySelector("canvas").getContext("2d");
+                this.gameContext.canvas.height = 600;
+                this.gameContext.canvas.width = 600;
+                this.gameContext.canvas.style.height = "600px";
+                this.gameContext.canvas.style.width = "600px";
+                window.addEventListener("keydown", this.keyListener)
+                window.addEventListener("keyup", this.keyListener);
+                this.keyLoop();
+            },
+            keyListener : function(event){
+                let key_state = (event.type === "keydown");
+                switch(event.keyCode) {
+                    case 37:
+                        this.left = key_state;
+                        break;
+                    case 38:
+                        this.up = key_state;
+                        break;
+                    case 39:
+                        this.right = key_state;
+                        break;
+                    case 40:
+                        this.down = key_state;
+                }
+            },
+            keyLoop: function(){
+                if(this.up){
+                    if(this.right){
+                        this.sendMove(9);
+                    }else if(this.left){
+                        this.sendMove(7);
+                    }else{
+                        this.sendMove(8);
+                    }
+                }else if(this.down){
+                    if(this.right){
+                        this.sendMove(3);
+                    }else if(this.left){
+                        this.sendMove(1);
+                    }else{
+                        this.sendMove(2);
+                    }
+                }else if(this.left) {
+                    this.sendMove(4);
+                }else if(this.right){
+                    this.sendMove(6);
+                }
+                setTimeout(this.keyLoop,100);
+            },
+            gameLoop: function(){
+                this.gameContext.fillStyle = "#F7F7F7";
+                this.gameContext.fillRect(0,0,600,600);
+                this.drawPlayer(300,150, "#98DEFF");
+                this.players.forEach(p => {
+                       const pX =  this.player.posX > p.posX ? 300 - (this.player.posX - p.posX) : (p.posX - this.player.posX) + 300;
+                       const pY =  this.player.posY > p.posY ? 300 - (this.player.posY - p.posY) : (p.PosY - this.player.posY) + 300;
+                        if(pX > 0 && pX < 800 && pY > 0 && pY < 800){
+                            this.drawPlayer(pX,pY, "#FB0000");
+                        }
+                });
+            },
+            drawPlayer: function(x,y,color){
+              this.gameContext.fillStyle = color;
+              this.gameContext.beginPath();
+              this.gameContext.rect(x, y, 10,10);
+              this.gameContext.fill();
             },
         },
         mounted: async function () {

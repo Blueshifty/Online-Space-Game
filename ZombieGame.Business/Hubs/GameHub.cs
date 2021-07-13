@@ -51,14 +51,14 @@ namespace ZombieGame.Business.Hubs
                 {
                     case 1:
                         player.PosX--;
-                        player.PosY--;
+                        player.PosY++;
                         break;
                     case 2:
-                        player.PosY -= 2;
+                        player.PosY += 2;
                         break;
                     case 3:
                         player.PosX++;
-                        player.PosY--;
+                        player.PosY++;
                         break;
                     case 4:
                         player.PosX -= 2;
@@ -68,14 +68,14 @@ namespace ZombieGame.Business.Hubs
                         break;
                     case 7:
                         player.PosX--;
-                        player.PosY++;
+                        player.PosY--;
                         break;
                     case 8:
-                        player.PosY += 2;
+                        player.PosY -= 2;
                         break;
                     case 9:
                         player.PosX++;
-                        player.PosY++;
+                        player.PosY--;
                         break;
                 }
                 

@@ -46,32 +46,7 @@
         </div>
         <div class="mx-auto mt-2" v-if="viewState==='inGame'">
             <div class="row">
-                <div class="col-2 mx-auto">
-                    <button class="btn btn-success" v-on:click="sendMove(8)">
-                        UP
-                    </button>
-                </div>
-                <div class="row">
-                    <div class="col-2 ms-auto">
-                        <button class="btn btn-success" v-on:click="sendMove(4)">
-                            LEFT
-                        </button>
-                    </div>
-                    <div class="col-2">
-                    </div>
-                    <div class="col-2 me-auto">
-                        <button class="btn btn-success" v-on:click="sendMove(6)">
-                            RIGHT
-                        </button>
-                    </div>
-                </div>
-                <div class="row">
-                    <div class="col-2 mx-auto">
-                        <button class="btn btn-success" v-on:click="sendMove(2)">
-                            DOWN
-                        </button>  
-                    </div>
-                </div>
+                <canvas class="mx-auto"></canvas>
             </div>
         </div>
     </div>
