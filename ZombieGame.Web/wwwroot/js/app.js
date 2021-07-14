@@ -147,7 +147,7 @@ const vue = new Vue({
                        const pX =  this.player.posX > p.posX ? 300 - (this.player.posX - p.posX) : 300 + (p.posX - this.player.posX);
                        const pY =  this.player.posY > p.posY ? 300 - (this.player.posY - p.posY) : 300 + (p.posY - this.player.posY);
                        console.log(pY, pX);
-                        if(pX > 0 && pX < 800 && pY > 0 && pY < 800){
+                        if(pX > 0 && pX < 600 && pY > 0 && pY < 600){
                             this.drawPlayer(pX,pY, "#FB0000");
                         }
                 });
