@@ -136,15 +136,17 @@ const vue = new Vue({
                 }else if(this.right){
                     this.sendMove(6);
                 }
-                setTimeout(this.keyLoop,100);
+                setTimeout(this.keyLoop,75);
             },
             gameLoop: function(){
                 this.gameContext.fillStyle = "#F7F7F7";
                 this.gameContext.fillRect(0,0,600,600);
-                this.drawPlayer(300,150, "#98DEFF");
+                this.drawPlayer(300,300, "#98DEFF");
+                console.log(this.player);
                 this.players.forEach(p => {
-                       const pX =  this.player.posX > p.posX ? 300 - (this.player.posX - p.posX) : (p.posX - this.player.posX) + 300;
-                       const pY =  this.player.posY > p.posY ? 300 - (this.player.posY - p.posY) : (p.PosY - this.player.posY) + 300;
+                       const pX =  this.player.posX > p.posX ? 300 - (this.player.posX - p.posX) : 300 + (p.posX - this.player.posX);
+                       const pY =  this.player.posY > p.posY ? 300 - (this.player.posY - p.posY) : 300 + (p.posY - this.player.posY);
+                       console.log(pY, pX);
                         if(pX > 0 && pX < 800 && pY > 0 && pY < 800){
                             this.drawPlayer(pX,pY, "#FB0000");
                         }

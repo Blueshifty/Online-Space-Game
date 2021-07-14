@@ -50,32 +50,32 @@ namespace ZombieGame.Business.Hubs
                 switch (move.Towards)
                 {
                     case 1:
-                        player.PosX--;
-                        player.PosY++;
+                        player.PosX-=3;
+                        player.PosY+=3;
                         break;
                     case 2:
-                        player.PosY += 2;
+                        player.PosY += 6;
                         break;
                     case 3:
-                        player.PosX++;
-                        player.PosY++;
+                        player.PosX+=3;
+                        player.PosY+=3;
                         break;
                     case 4:
-                        player.PosX -= 2;
+                        player.PosX -= 6;
                         break;
                     case 6:
-                        player.PosX += 2;
+                        player.PosX += 6;
                         break;
                     case 7:
-                        player.PosX--;
-                        player.PosY--;
+                        player.PosX+=3;
+                        player.PosY-=3;
                         break;
                     case 8:
-                        player.PosY -= 2;
+                        player.PosY -= 6;
                         break;
                     case 9:
-                        player.PosX++;
-                        player.PosY--;
+                        player.PosX+=3;
+                        player.PosY-=3;
                         break;
                 }
                 
@@ -131,7 +131,7 @@ namespace ZombieGame.Business.Hubs
                     var gameRoom = new GameRoom($"Game Room {i}", i * 10, i*10);
                     GameRooms[gameRoom.Id] = gameRoom;
                 }
-                Internal = new Timer(GameLoop, null, TimeSpan.Zero, TimeSpan.FromMilliseconds(75));
+                Internal = new Timer(GameLoop, null, TimeSpan.Zero, TimeSpan.FromMilliseconds(50));
             }
             return _mapper.Map<List<GameRoom>, List<RoomOnDashboardDto>>(GameRooms.Values.ToList());
         }
