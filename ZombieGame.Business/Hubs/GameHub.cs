@@ -67,7 +67,7 @@ namespace ZombieGame.Business.Hubs
                         player.PosX += 6;
                         break;
                     case 7:
-                        player.PosX+=3;
+                        player.PosX-=3;
                         player.PosY-=3;
                         break;
                     case 8:

@@ -42,7 +42,7 @@ const vue = new Vue({
                     this.currentRoom = gameRoom;
                 });
                 this.connection.on("playerMoveUpdate", (playerMove) => {
-                    console.log(playerMove);
+                    //console.log(playerMove);
                 });
                 this.connection.on("update", (players) => {
                     this.player = players.find(p => p.name === this.nick);
@@ -59,7 +59,7 @@ const vue = new Vue({
             },
             joinGame: function(id){
               this.connection.invoke('JoinGame', {name:this.nick, roomId:id}).then(response => {
-                  console.log(response);
+                  //console.log(response);
                   this.viewState = 'inGame';
                   this.$nextTick(() => {
                       this.initGame();
@@ -68,7 +68,7 @@ const vue = new Vue({
             },
             getGameRooms: function(){
               this.connection.invoke("GetGameRooms").then(response => {
-                  console.log(response);
+                  //console.log(response);
                   this.gameRooms = response;
               })  
             },
@@ -142,11 +142,11 @@ const vue = new Vue({
                 this.gameContext.fillStyle = "#F7F7F7";
                 this.gameContext.fillRect(0,0,600,600);
                 this.drawPlayer(300,300, "#98DEFF");
-                console.log(this.player);
+                //console.log(this.player);
                 this.players.forEach(p => {
                        const pX =  this.player.posX > p.posX ? 300 - (this.player.posX - p.posX) : 300 + (p.posX - this.player.posX);
                        const pY =  this.player.posY > p.posY ? 300 - (this.player.posY - p.posY) : 300 + (p.posY - this.player.posY);
-                       console.log(pY, pX);
+                       //console.log(pY, pX);
                         if(pX > 0 && pX < 600 && pY > 0 && pY < 600){
                             this.drawPlayer(pX,pY, "#FB0000");
                         }
@@ -160,7 +160,7 @@ const vue = new Vue({
             },
         },
         mounted: async function () {
-                console.log(this.viewState);
+                //console.log(this.viewState);
                 await this.initSignalRConnection();
                 this.viewState = 'nick';
         }
