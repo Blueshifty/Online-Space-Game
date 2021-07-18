@@ -49,14 +49,14 @@ const vue = new Vue({
                 });
             },
             sendMove: function(towards){
-                console.log(towards);
+                //(towards);
                 this.connection.invoke("SendMove", towards).then(response => {
                     //console.log(response);
                 })
             },
             joinGame: function(id){
               this.connection.invoke('JoinGame', {name:this.nick, roomId:id}).then(response => {
-                  console.log(response);
+                  //console.log(response);
                   this.viewState = 'inGame';
                   this.$nextTick(() => {
                       this.initGame();
