@@ -26,7 +26,6 @@ namespace ZombieGame.Business.Hubs.HubModels
             SizeX = size * 100;
             SizeY = size * 100;
             Map = new int[SizeX, SizeY];
-            CurrentPlayerCount = 0;
             MoveSpeed = 10;
             Players = new Dictionary<string, Player>();
         }

@@ -19,6 +19,8 @@ namespace ZombieGame.Business.Hubs
 
         private static readonly Dictionary<string, GameRoom> GameRooms = new();
 
+        private static readonly Dictionary<string, Timer> RoomIntervals = new(); 
+
         private static int Tick = 60;
 
         private static IHubContext<GameHub> HubContext;
@@ -33,39 +35,37 @@ namespace ZombieGame.Business.Hubs
 
         private static void GameLoop(object? state)
         {
-            foreach (var gameRoom in GameRooms)
+            var gameRoom = GameRooms[state.ToString()];
+
+            foreach (var player in gameRoom.Players.Values.Where(p => p.Towards != Towards.NOWHERE))
             {
-                foreach (var player in gameRoom.Value.Players.Values.Where(p => p.Towards != Towards.NOWHERE))
+                var posX = player.PosX;
+                var posY = player.PosY;
+
+                switch (player.Towards)
                 {
-                    var posX = player.PosX;
-                    var posY = player.PosY;
-                    
-                    switch (player.Towards)
-                    {
-                        case Towards.UP:
-                            player.PosY -= gameRoom.Value.MoveSpeed;
-                            break;
-                        case Towards.DOWN:
-                            player.PosY += gameRoom.Value.MoveSpeed;
-                            break;
-                        case Towards.RIGHT:
-                            player.PosX += gameRoom.Value.MoveSpeed;
-                            break;
-                        case Towards.LEFT:
-                            player.PosX -= gameRoom.Value.MoveSpeed;
-                            break;
-                    }
-
-                    if (player.PosX > gameRoom.Value.SizeX || player.PosX < 0 || player.PosY > gameRoom.Value.SizeY ||
-                        player.PosY < 0)
-                    {
-                        player.PosX = posX;
-                        player.PosY = posY;
-                    }
+                    case Towards.UP:
+                        player.PosY -= gameRoom.MoveSpeed;
+                        break;
+                    case Towards.DOWN:
+                        player.PosY += gameRoom.MoveSpeed;
+                        break;
+                    case Towards.RIGHT:
+                        player.PosX += gameRoom.MoveSpeed;
+                        break;
+                    case Towards.LEFT:
+                        player.PosX -= gameRoom.MoveSpeed;
+                        break;
                 }
-
-                HubContext.Clients.Group(gameRoom.Key).SendAsync("update", gameRoom.Value.Players.Values);
+                
+                if (player.PosX > gameRoom.SizeX || player.PosX < 0 || player.PosY > gameRoom.SizeY ||
+                    player.PosY < 0)
+                {
+                    player.PosX = posX;
+                    player.PosY = posY;
+                }
             }
+            HubContext.Clients.Group(gameRoom.Id).SendAsync("update", gameRoom.Players.Values);
         }
 
         public async Task SendMove(MoveDto move)
@@ -98,11 +98,16 @@ namespace ZombieGame.Business.Hubs
 
                 var gameRoom = GameRooms[joinDto.RoomId];
 
-                if (gameRoom.CurrentPlayerCount < gameRoom.PlayerCount)
+                if (gameRoom.Players.Count == 0)
+                {
+                    RoomIntervals[gameRoom.Id] = new Timer(GameLoop, gameRoom.Id, TimeSpan.Zero,
+                        TimeSpan.FromMilliseconds(1000 / Tick));
+                }
+                
+                if (gameRoom.Players.Count < gameRoom.PlayerCount)
                 {
                     await Groups.AddToGroupAsync(Context.ConnectionId, joinDto.RoomId);
                     gameRoom.Players[Context.ConnectionId] = player;
-                    gameRoom.CurrentPlayerCount++;
                 }
             }
             catch (Exception ex)
@@ -127,8 +132,6 @@ namespace ZombieGame.Business.Hubs
                     var gameRoom = new GameRoom($"Game Room {i}", i*5 , i*5);
                     GameRooms[gameRoom.Id] = gameRoom;
                 }
-
-                Internal = new Timer(GameLoop, null, TimeSpan.Zero, TimeSpan.FromMilliseconds(1000 / Tick));
             }
             return _mapper.Map<List<GameRoom>, List<RoomOnDashboardDto>>(GameRooms.Values.ToList());
         }
@@ -138,7 +141,12 @@ namespace ZombieGame.Business.Hubs
             if (PlayerRoomMap.ContainsKey(Context.ConnectionId) && GameRooms[PlayerRoomMap[Context.ConnectionId]].Players.ContainsKey(Context.ConnectionId))
             {
                 GameRooms[PlayerRoomMap[Context.ConnectionId]].Players.Remove(Context.ConnectionId);
-                GameRooms[PlayerRoomMap[Context.ConnectionId]].CurrentPlayerCount--;
+                
+                if (GameRooms[PlayerRoomMap[Context.ConnectionId]].Players.Count == 0)
+                {
+                    RoomIntervals.Remove(PlayerRoomMap[Context.ConnectionId]);
+                    
+                }
                 PlayerRoomMap.Remove(Context.ConnectionId);
             }
 
