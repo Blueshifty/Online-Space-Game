@@ -2,7 +2,7 @@ name: Push Container to Heroku
 
 on:
   push:
-    branches: [ main ]
+    branches: [ master ]
 
 jobs:
   # This workflow contains a single job called "build"
