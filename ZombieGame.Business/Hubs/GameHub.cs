@@ -19,7 +19,7 @@ namespace ZombieGame.Business.Hubs
 
         private static readonly Dictionary<string, GameRoom> GameRooms = new();
 
-        private static int Tick = 100;
+        private static int Tick = 60;
 
         private static IHubContext<GameHub> HubContext;
 
