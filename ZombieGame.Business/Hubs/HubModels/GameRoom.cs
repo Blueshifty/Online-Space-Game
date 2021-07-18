@@ -8,6 +8,10 @@ namespace ZombieGame.Business.Hubs.HubModels
         public string Id { get; }
         public int PlayerCount { get; set; }
         public int CurrentPlayerCount { get; set; }
+        public int SizeX { get; set; }
+        public int SizeY { get; set; }
+        
+        public int MoveSpeed { get; set; }
 
         public Dictionary<string, Player> Players { get; set; }
         public string Name { get; set;}
@@ -19,8 +23,11 @@ namespace ZombieGame.Business.Hubs.HubModels
             Name = name;
             Id = Guid.NewGuid().ToString();
             PlayerCount = playerCount;
-            Map = new int[size * 100, size * 100];
+            SizeX = size * 100;
+            SizeY = size * 100;
+            Map = new int[SizeX, SizeY];
             CurrentPlayerCount = 0;
+            MoveSpeed = 10;
             Players = new Dictionary<string, Player>();
         }
     }

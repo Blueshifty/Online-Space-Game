@@ -15,10 +15,7 @@ const vue = new Vue({
             players: [],
             player: null,
             playerController: null,
-            up:false,
-            right:false,
-            down:false,
-            left:false
+            moveState: null,
         },
         methods: {
             startConnection: async function () {
@@ -53,17 +50,18 @@ const vue = new Vue({
             },
             sendMove: function(towards){
                 console.log(towards);
-                this.connection.invoke("SendMove", {Towards: towards}).then(response => {
+                this.connection.invoke("SendMove", towards).then(response => {
                     //console.log(response);
                 })
             },
             joinGame: function(id){
               this.connection.invoke('JoinGame', {name:this.nick, roomId:id}).then(response => {
-                  //console.log(response);
+                  console.log(response);
                   this.viewState = 'inGame';
                   this.$nextTick(() => {
                       this.initGame();
-                  })
+                  });
+                  this.currentRoom = this.gameRooms.find(g => g.id === id);
               });
             },
             getGameRooms: function(){
@@ -94,68 +92,85 @@ const vue = new Vue({
                 this.gameContext.canvas.width = 600;
                 this.gameContext.canvas.style.height = "600px";
                 this.gameContext.canvas.style.width = "600px";
+                this.gameContext.font = "10px Arial";
                 window.addEventListener("keydown", this.keyListener)
                 window.addEventListener("keyup", this.keyListener);
-                this.keyLoop();
             },
             keyListener : function(event){
-                let key_state = (event.type === "keydown");
+                let keyState = (event.type === "keydown");
+                let newState = null;
                 switch(event.keyCode) {
                     case 37:
-                        this.left = key_state;
+                        newState = {towards: 4,keyState: keyState};
                         break;
                     case 38:
-                        this.up = key_state;
+                        newState = {towards: 1, keyState: keyState};
                         break;
                     case 39:
-                        this.right = key_state;
+                        newState = {towards: 2, keyState: keyState};
                         break;
                     case 40:
-                        this.down = key_state;
+                        newState = {towards:3, keyState: keyState};
+                        break;
                 }
-            },
-            keyLoop: function(){
-                if(this.up){
-                    if(this.right){
-                        this.sendMove(9);
-                    }else if(this.left){
-                        this.sendMove(7);
-                    }else{
-                        this.sendMove(8);
-                    }
-                }else if(this.down){
-                    if(this.right){
-                        this.sendMove(3);
-                    }else if(this.left){
-                        this.sendMove(1);
-                    }else{
-                        this.sendMove(2);
-                    }
-                }else if(this.left) {
-                    this.sendMove(4);
-                }else if(this.right){
-                    this.sendMove(6);
+                if(JSON.stringify(this.moveState) !== JSON.stringify(newState)){
+                    this.moveState = newState;
+                    this.sendMove(this.moveState);
                 }
-                setTimeout(this.keyLoop,75);
             },
             gameLoop: function(){
+                
                 this.gameContext.fillStyle = "#F7F7F7";
+                
                 this.gameContext.fillRect(0,0,600,600);
-                this.drawPlayer(300,300, "#98DEFF");
-                //console.log(this.player);
+                
+                this.drawPlayer(300,300, "#98DEFF", this.nick);
+                
                 this.players.forEach(p => {
                        const pX =  this.player.posX > p.posX ? 300 - (this.player.posX - p.posX) : 300 + (p.posX - this.player.posX);
                        const pY =  this.player.posY > p.posY ? 300 - (this.player.posY - p.posY) : 300 + (p.posY - this.player.posY);
-                       //console.log(pY, pX);
                         if(pX > 0 && pX < 600 && pY > 0 && pY < 600){
-                            this.drawPlayer(pX,pY, "#FB0000");
+                            this.drawPlayer(pX,pY, "#FB0000", p.name);
                         }
                 });
+                
+                /*
+                 Sınırları cizen kod
+                 */
+                this.gameContext.beginPath();
+                let x1 = 300 - this.player.posX;
+                let y1= 300 - this.player.posY;
+                
+                if(this.player.posY <= 300){
+                    this.gameContext.moveTo(x1 > 0 ? x1 : 0, y1);
+                    this.gameContext.lineTo((this.currentRoom.sizeX - this.player.posX) + 310,y1);
+                    this.gameContext.stroke();
+                }
+                
+                if(this.player.posX <= 300){
+                    this.gameContext.moveTo(x1, y1 > 0 ? y1 : 0);
+                    this.gameContext.lineTo(x1,(this.currentRoom.sizeY - this.player.posY) + 310);
+                    this.gameContext.stroke();
+                }
+                
+                if((this.currentRoom.sizeX - this.player.posX) <= 300){
+                    this.gameContext.moveTo(this.currentRoom.sizeX - this.player.posX + 310, y1 > 0 ? y1 : 0);
+                    this.gameContext.lineTo(this.currentRoom.sizeX -this.player.posX + 310, (this.currentRoom.sizeY - this.player.posY) + 310);
+                    this.gameContext.stroke();
+                }
+                
+                if((this.currentRoom.sizeY - this.player.posY) <= 300) {
+                    this.gameContext.moveTo(x1 > 0 ? x1: 0, (this.currentRoom.sizeY - this.player.posY) +310);
+                    this.gameContext.lineTo((this.currentRoom.sizeX - this.player.posX) + 310, (this.currentRoom.sizeY - this.player.posY) + 310);
+                    this.gameContext.stroke();
+                }
             },
-            drawPlayer: function(x,y,color){
+            drawPlayer: function(x,y,color, nick){
               this.gameContext.fillStyle = color;
               this.gameContext.beginPath();
               this.gameContext.rect(x, y, 10,10);
+              const metric = this.gameContext.measureText(nick);
+              this.gameContext.fillText(nick,x-(metric.width/2) + 5, y+20);
               this.gameContext.fill();
             },
         },

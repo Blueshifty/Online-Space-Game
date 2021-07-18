@@ -14,16 +14,18 @@ namespace ZombieGame.Business.Hubs
     public class GameHub : Hub
     {
         private readonly IMapper _mapper;
-        
+
         private static readonly Dictionary<string, string> PlayerRoomMap = new();
 
         private static readonly Dictionary<string, GameRoom> GameRooms = new();
 
-        public static IHubContext<GameHub> HubContext;
+        private static int Tick = 25;
 
-        public static Timer Internal;
+        private static IHubContext<GameHub> HubContext;
 
-        public GameHub( IHubContext<GameHub> hubContext,IMapper mapper)
+        private static Timer Internal;
+
+        public GameHub(IHubContext<GameHub> hubContext, IMapper mapper)
         {
             _mapper = mapper;
             HubContext = hubContext;
@@ -33,64 +35,59 @@ namespace ZombieGame.Business.Hubs
         {
             foreach (var gameRoom in GameRooms)
             {
+                foreach (var player in gameRoom.Value.Players.Values.Where(p => p.Towards != Towards.NOWHERE))
+                {
+                    var posX = player.PosX;
+                    var posY = player.PosY;
+                    
+                    switch (player.Towards)
+                    {
+                        case Towards.UP:
+                            player.PosY -= gameRoom.Value.MoveSpeed;
+                            break;
+                        case Towards.DOWN:
+                            player.PosY += gameRoom.Value.MoveSpeed;
+                            break;
+                        case Towards.RIGHT:
+                            player.PosX += gameRoom.Value.MoveSpeed;
+                            break;
+                        case Towards.LEFT:
+                            player.PosX -= gameRoom.Value.MoveSpeed;
+                            break;
+                    }
+
+                    if (player.PosX > gameRoom.Value.SizeX || player.PosX < 0 || player.PosY > gameRoom.Value.SizeY ||
+                        player.PosY < 0)
+                    {
+                        player.PosX = posX;
+                        player.PosY = posY;
+                    }
+                }
+
                 HubContext.Clients.Group(gameRoom.Key).SendAsync("update", gameRoom.Value.Players.Values);
             }
         }
-        
+
         public async Task SendMove(MoveDto move)
         {
             try
             {
                 var player = GameRooms[PlayerRoomMap[Context.ConnectionId]].Players[Context.ConnectionId];
-                
-                var oldPosX = player.PosX;
-
-                var oldPosY = player.PosY;
-
-                switch (move.Towards)
+                if (move.KeyState)
                 {
-                    case 1:
-                        player.PosX-=3;
-                        player.PosY+=3;
-                        break;
-                    case 2:
-                        player.PosY += 6;
-                        break;
-                    case 3:
-                        player.PosX+=3;
-                        player.PosY+=3;
-                        break;
-                    case 4:
-                        player.PosX -= 6;
-                        break;
-                    case 6:
-                        player.PosX += 6;
-                        break;
-                    case 7:
-                        player.PosX-=3;
-                        player.PosY-=3;
-                        break;
-                    case 8:
-                        player.PosY -= 6;
-                        break;
-                    case 9:
-                        player.PosX+=3;
-                        player.PosY-=3;
-                        break;
+                    player.Towards = move.Towards;
                 }
-                
-                if ( player.PosX is > 200 or < 0 || player.PosY is > 200 or < 0)
+                else if (player.Towards == move.Towards)
                 {
-                    player.PosX = oldPosX;
-                    player.PosY = oldPosY;
+                    player.Towards = Towards.NOWHERE;
                 }
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 await Clients.Caller.SendAsync("onError", "Error : " + ex.Message);
             }
         }
-        
+
         public async Task JoinGame(JoinDto joinDto)
         {
             try
@@ -100,13 +97,11 @@ namespace ZombieGame.Business.Hubs
                 PlayerRoomMap[Context.ConnectionId] = joinDto.RoomId;
 
                 var gameRoom = GameRooms[joinDto.RoomId];
-                
+
                 if (gameRoom.CurrentPlayerCount < gameRoom.PlayerCount)
                 {
                     await Groups.AddToGroupAsync(Context.ConnectionId, joinDto.RoomId);
-
                     gameRoom.Players[Context.ConnectionId] = player;
-                    
                     gameRoom.CurrentPlayerCount++;
                 }
             }
@@ -115,33 +110,45 @@ namespace ZombieGame.Business.Hubs
                 await Clients.Caller.SendAsync("onError", "You failed to join game room" + ex.Message);
             }
         }
-        
+
         public async Task Leave(string roomId)
         {
             GameRooms[PlayerRoomMap[Context.ConnectionId]].Players.Remove(Context.ConnectionId);
             await Groups.RemoveFromGroupAsync(Context.ConnectionId, roomId);
         }
+
         public IEnumerable<RoomOnDashboardDto> GetGameRooms()
         {
             //Init rooms if not exists.
             if (GameRooms.Values.Count == 0)
             {
-                for (var i = 1; i <= 10; ++i)
+                for (var i = 1; i <= 5; ++i)
                 {
                     var gameRoom = new GameRoom($"Game Room {i}", i * 10, i*10);
                     GameRooms[gameRoom.Id] = gameRoom;
                 }
-                Internal = new Timer(GameLoop, null, TimeSpan.Zero, TimeSpan.FromMilliseconds(50));
+
+                Internal = new Timer(GameLoop, null, TimeSpan.Zero, TimeSpan.FromMilliseconds(1000 / Tick));
             }
+
             return _mapper.Map<List<GameRoom>, List<RoomOnDashboardDto>>(GameRooms.Values.ToList());
         }
-        
+
+        public override Task OnDisconnectedAsync(Exception ex)
+        {
+            if (PlayerRoomMap.ContainsKey(Context.ConnectionId) && GameRooms[PlayerRoomMap[Context.ConnectionId]].Players.ContainsKey(Context.ConnectionId))
+            {
+                GameRooms[PlayerRoomMap[Context.ConnectionId]].Players.Remove(Context.ConnectionId);
+                PlayerRoomMap.Remove(Context.ConnectionId);
+            }
+
+            return base.OnDisconnectedAsync(ex);
+        }
+
         private string GetDevice()
         {
             var device = Context.GetHttpContext().Request.Headers["Device"].ToString();
-            if (!string.IsNullOrEmpty(device) && (device.Equals("Desktop") || device.Equals("Mobile")))
-                return device;
-
+            if (!string.IsNullOrEmpty(device) && (device.Equals("Desktop") || device.Equals("Mobile"))) return device;
             return "Web";
         }
     }

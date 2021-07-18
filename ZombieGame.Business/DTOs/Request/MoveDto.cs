@@ -1,9 +1,10 @@
-﻿using System.Collections.Generic;
+﻿using ZombieGame.Business.Hubs.HubModels;
 
 namespace ZombieGame.Business.DTOs.Request
 {
     public class MoveDto
     {
-       public int Towards { get; set; } 
+        public Towards Towards { get; set; }
+        public bool KeyState { get; set; }
     }
 }
