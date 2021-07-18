@@ -138,6 +138,7 @@ namespace ZombieGame.Business.Hubs
             if (PlayerRoomMap.ContainsKey(Context.ConnectionId) && GameRooms[PlayerRoomMap[Context.ConnectionId]].Players.ContainsKey(Context.ConnectionId))
             {
                 GameRooms[PlayerRoomMap[Context.ConnectionId]].Players.Remove(Context.ConnectionId);
+                GameRooms[PlayerRoomMap[Context.ConnectionId]].CurrentPlayerCount--;
                 PlayerRoomMap.Remove(Context.ConnectionId);
             }
 
