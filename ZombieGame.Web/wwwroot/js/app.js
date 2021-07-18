@@ -77,7 +77,7 @@ const vue = new Vue({
                 }
             },
             initSignalRConnection: async function () {
-                this.connection = new signalR.HubConnectionBuilder().withUrl("https://localhost:5001/gameHub")
+                this.connection = new signalR.HubConnectionBuilder().withUrl("/gameHub")
                     .configureLogging(signalR.LogLevel.Information).build();
 
                 this.initializeSignalRMethods();
