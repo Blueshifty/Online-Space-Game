@@ -19,7 +19,7 @@ namespace ZombieGame.Business.Hubs
 
         private static readonly Dictionary<string, GameRoom> GameRooms = new();
 
-        private static int Tick = 25;
+        private static int Tick = 30;
 
         private static IHubContext<GameHub> HubContext;
 
@@ -124,7 +124,7 @@ namespace ZombieGame.Business.Hubs
             {
                 for (var i = 1; i <= 5; ++i)
                 {
-                    var gameRoom = new GameRoom($"Game Room {i}", i * 10, i*10);
+                    var gameRoom = new GameRoom($"Game Room {i}", i*5 , i*5);
                     GameRooms[gameRoom.Id] = gameRoom;
                 }
 
