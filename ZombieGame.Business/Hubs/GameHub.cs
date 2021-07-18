@@ -130,7 +130,6 @@ namespace ZombieGame.Business.Hubs
 
                 Internal = new Timer(GameLoop, null, TimeSpan.Zero, TimeSpan.FromMilliseconds(1000 / Tick));
             }
-
             return _mapper.Map<List<GameRoom>, List<RoomOnDashboardDto>>(GameRooms.Values.ToList());
         }
 
