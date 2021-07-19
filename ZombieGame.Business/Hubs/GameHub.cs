@@ -25,8 +25,6 @@ namespace ZombieGame.Business.Hubs
 
         private static IHubContext<GameHub> HubContext;
 
-        private static Timer Internal;
-
         public GameHub(IHubContext<GameHub> hubContext, IMapper mapper)
         {
             _mapper = mapper;

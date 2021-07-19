@@ -7,7 +7,6 @@ namespace ZombieGame.Business.Hubs.HubModels
     {
         public string Id { get; }
         public int PlayerCount { get; set; }
-        public int CurrentPlayerCount { get; set; }
         public int SizeX { get; set; }
         public int SizeY { get; set; }
         
