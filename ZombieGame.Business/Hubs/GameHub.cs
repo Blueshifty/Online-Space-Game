@@ -4,10 +4,13 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.SignalR;
+using ZombieGame.Business.DTOs.Event;
 using ZombieGame.Business.DTOs.Request;
 using ZombieGame.Business.DTOs.Response;
 using ZombieGame.Business.Hubs.HubModels;
+using ZombieGame.Business.Utilities;
 using ZombieGame.Business.Utilities.Mapper;
+using static ZombieGame.Business.Game.Dictionaries;
 
 namespace ZombieGame.Business.Hubs
 {
@@ -15,22 +18,30 @@ namespace ZombieGame.Business.Hubs
     {
         private readonly IMapper _mapper;
 
-        private static readonly Dictionary<string, string> PlayerRoomMap = new();
-
-        private static readonly Dictionary<string, GameRoom> GameRooms = new();
-
-        private static readonly Dictionary<string, Timer> RoomIntervals = new(); 
-
         private static int Tick = 60;
+        private static readonly Dictionary<string, Timer> RoomIntervals = new();
 
         private static IHubContext<GameHub> HubContext;
+        private static ApplicationContext ApplicationContext;
 
-        public GameHub(IHubContext<GameHub> hubContext, IMapper mapper)
+        public GameHub(IHubContext<GameHub> hubContext, IMapper mapper, ApplicationContext context)
         {
             _mapper = mapper;
             HubContext = hubContext;
+            ApplicationContext = context;
+            context.ListenEvent(typeof(DisconnectUserEvent), DisconnectUserHandle);
         }
 
+
+        public async void DisconnectUserHandle(object sender, EventArgs args)
+        {
+            DisconnectUserEvent @event = (DisconnectUserEvent) args;
+            GameRooms[PlayerRoomMap[@event.DisconnectUser.ConnectionId]].Players.Remove(@event.DisconnectUser.ConnectionId);
+            ApplicationContext.FireEvent(this, new JoinOrLeaveEvent());
+            await HubContext.Groups.RemoveFromGroupAsync(@event.DisconnectUser.ConnectionId, @event.DisconnectUser.RoomId);
+
+        }
+        
         private static void GameLoop(object? state)
         {
             var gameRoom = GameRooms[state.ToString()];
@@ -106,6 +117,7 @@ namespace ZombieGame.Business.Hubs
                 {
                     await Groups.AddToGroupAsync(Context.ConnectionId, joinDto.RoomId);
                     gameRoom.Players[Context.ConnectionId] = player;
+                    ApplicationContext.FireEvent(this, new JoinOrLeaveEvent());
                 }
             }
             catch (Exception ex)
@@ -118,6 +130,7 @@ namespace ZombieGame.Business.Hubs
         {
             GameRooms[PlayerRoomMap[Context.ConnectionId]].Players.Remove(Context.ConnectionId);
             await Groups.RemoveFromGroupAsync(Context.ConnectionId, roomId);
+            ApplicationContext.FireEvent(this, new JoinOrLeaveEvent());
         }
 
         public IEnumerable<RoomOnDashboardDto> GetGameRooms()
@@ -146,6 +159,7 @@ namespace ZombieGame.Business.Hubs
                     
                 }
                 PlayerRoomMap.Remove(Context.ConnectionId);
+                ApplicationContext.FireEvent(this, new JoinOrLeaveEvent());
             }
 
             return base.OnDisconnectedAsync(ex);
@@ -157,5 +171,6 @@ namespace ZombieGame.Business.Hubs
             if (!string.IsNullOrEmpty(device) && (device.Equals("Desktop") || device.Equals("Mobile"))) return device;
             return "Web";
         }
+        
     }
 }

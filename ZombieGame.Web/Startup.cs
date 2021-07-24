@@ -1,6 +1,7 @@
 using System;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Newtonsoft.Json;
@@ -48,8 +49,13 @@ namespace ZombieGame.Web
 
             app.UseEndpoints(endpoints =>
             {
+                endpoints.MapGet("/dashboard", async context =>
+                {
+                    await context.Response.SendFileAsync("wwwroot/dashboard.html");
+                });
                 endpoints.MapControllers();
                 endpoints.MapHub<GameHub>("/gameHub");
+                endpoints.MapHub<DashboardHub>("/dashboardHub");
             });
         }
     }

@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Zombie Game Dashboard</title>
+    <link rel="stylesheet" href="lib/bootstrap-5.0.2/css/bootstrap.min.css">
+    <link rel="stylesheet" href="css/style.css">
+    <script src="lib/bootstrap-5.0.2/js/bootstrap.min.js"></script>
+    <script src="lib/vue/vue.min.js"></script>
+    <script src="lib/signalr/signalr.min.js"></script>
+    <script src="lib/axios/axios.min.js"></script>
+</head>
+<body>
+    <div id="dashboard-wrapper">
+        <div class="container">
+            <div class="row mx-auto" style="box-sizing: border-box">
+                <div v-for="room in rooms" class="col-4 my-3 p-2">
+                    <div class="text-white bg-secondary p-2" style="display: flex; justify-content: space-between">
+                        <div>${room.roomName}}</div>
+                        <div>${room.userCount}}</div>
+                    </div>
+                    <div class="p-2" style="overflow: auto; max-height: 100px; border-bottom: 1px solid #e2e3e5">
+                        <div style="display: flex; justify-content: space-between" v-for="user in room.users">
+                            <div style="align-items: center; display: flex;">
+                                ${user.username}}
+                            </div>
+                            <div>
+                                <button v-on:click="disconnect({roomId: room.roomId, connectionId: user.connectionId})" class="btn btn-secondary btn-sm">Bağlantıyı kes</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+
+<script src="js/dashboard.js"></script>
+</html>
