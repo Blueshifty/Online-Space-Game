@@ -1,4 +1,5 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
+using ZombieGame.Business.Utilities;
 using ZombieGame.Business.Utilities.Mapper;
 
 namespace ZombieGame.Web.Extensions
@@ -8,6 +9,7 @@ namespace ZombieGame.Web.Extensions
         public static IServiceCollection AddMySingleton(this IServiceCollection serviceCollection)
         {
             serviceCollection.AddSingleton<IMapper, Mapper>();
+            serviceCollection.AddSingleton<ApplicationContext>();
             return serviceCollection;
         }
     }
