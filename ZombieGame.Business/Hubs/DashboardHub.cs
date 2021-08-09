@@ -2,6 +2,7 @@
 using System;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.SignalR;
+using ZombieGame.Business.Application;
 using ZombieGame.Business.DTOs.Event;
 using ZombieGame.Business.DTOs.Request;
 using static ZombieGame.Business.Game.Dictionaries;

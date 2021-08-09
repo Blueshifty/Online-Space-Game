@@ -4,11 +4,11 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.SignalR;
+using ZombieGame.Business.Application;
 using ZombieGame.Business.DTOs.Event;
 using ZombieGame.Business.DTOs.Request;
 using ZombieGame.Business.DTOs.Response;
 using ZombieGame.Business.Hubs.HubModels;
-using ZombieGame.Business.Utilities;
 using ZombieGame.Business.Utilities.Mapper;
 using static ZombieGame.Business.Game.Dictionaries;
 

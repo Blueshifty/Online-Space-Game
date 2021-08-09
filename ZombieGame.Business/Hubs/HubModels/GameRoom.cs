@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using ZombieGame.Business.Game.Planets;
 
 namespace ZombieGame.Business.Hubs.HubModels
 {
@@ -13,20 +14,19 @@ namespace ZombieGame.Business.Hubs.HubModels
         public int MoveSpeed { get; set; }
 
         public Dictionary<string, Player> Players { get; set; }
+        public List<Planet> Planets { get; set; }
         public string Name { get; set;}
 
-        public int[,] Map { get; set; }
-        
         public GameRoom(string name,int playerCount, int size)
         {
             Name = name;
             Id = Guid.NewGuid().ToString();
             PlayerCount = playerCount;
-            SizeX = size * 100;
-            SizeY = size * 100;
-            Map = new int[SizeX, SizeY];
+            SizeX = size * 1000;
+            SizeY = size * 1000;
             MoveSpeed = 10;
             Players = new Dictionary<string, Player>();
+            Planets = new List<Planet>();
         }
     }
 }

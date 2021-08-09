@@ -1,5 +1,5 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
-using ZombieGame.Business.Utilities;
+using ZombieGame.Business.Application;
 using ZombieGame.Business.Utilities.Mapper;
 
 namespace ZombieGame.Web.Extensions

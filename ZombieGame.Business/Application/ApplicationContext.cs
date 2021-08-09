@@ -1,9 +1,7 @@
 using System;
 using System.Collections.Concurrent;
-using System.Collections.Generic;
-using System.Reflection;
 
-namespace ZombieGame.Business.Utilities
+namespace ZombieGame.Business.Application
 {
     public class ApplicationContext
     { 

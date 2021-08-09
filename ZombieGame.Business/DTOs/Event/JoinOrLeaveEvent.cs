@@ -1,4 +1,5 @@
 using System;
+using ZombieGame.Business.Application;
 using ZombieGame.Business.Utilities;
 
 namespace ZombieGame.Business.DTOs.Event
