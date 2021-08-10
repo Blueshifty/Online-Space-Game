@@ -1,5 +1,5 @@
 ﻿using ZombieGame.Business.DTOs.Response;
-using ZombieGame.Business.Hubs.HubModels;
+using ZombieGame.Business.Game;
 
 namespace ZombieGame.Business.Utilities.Mapper
 {

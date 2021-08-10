@@ -1,4 +1,4 @@
-﻿using ZombieGame.Business.Hubs.HubModels;
+﻿using ZombieGame.Business.Game;
 
 namespace ZombieGame.Business.DTOs.Request
 {

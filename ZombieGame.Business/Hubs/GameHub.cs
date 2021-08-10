@@ -8,7 +8,8 @@ using ZombieGame.Business.Application;
 using ZombieGame.Business.DTOs.Event;
 using ZombieGame.Business.DTOs.Request;
 using ZombieGame.Business.DTOs.Response;
-using ZombieGame.Business.Hubs.HubModels;
+using ZombieGame.Business.Game;
+using ZombieGame.Business.Game.Projectiles;
 using ZombieGame.Business.Utilities.Mapper;
 using static ZombieGame.Business.Game.Dictionaries;
 
@@ -17,11 +18,13 @@ namespace ZombieGame.Business.Hubs
     public class GameHub : Hub
     {
         private readonly IMapper _mapper;
-
+        
         private static int Tick = 60;
+        
         private static readonly Dictionary<string, Timer> RoomIntervals = new();
-
+        
         private static IHubContext<GameHub> HubContext;
+        
         private static ApplicationContext ApplicationContext;
 
         public GameHub(IHubContext<GameHub> hubContext, IMapper mapper, ApplicationContext context)
@@ -39,42 +42,13 @@ namespace ZombieGame.Business.Hubs
             GameRooms[PlayerRoomMap[@event.DisconnectUser.ConnectionId]].Players.Remove(@event.DisconnectUser.ConnectionId);
             ApplicationContext.FireEvent(this, new JoinOrLeaveEvent());
             await HubContext.Groups.RemoveFromGroupAsync(@event.DisconnectUser.ConnectionId, @event.DisconnectUser.RoomId);
-
         }
         
         private static void GameLoop(object? state)
         {
             var gameRoom = GameRooms[state.ToString()];
-
-            foreach (var player in gameRoom.Players.Values.Where(p => p.Towards != Towards.NOWHERE))
-            {
-                var posX = player.PosX;
-                var posY = player.PosY;
-
-                switch (player.Towards)
-                {
-                    case Towards.UP:
-                        player.PosY -= gameRoom.MoveSpeed;
-                        break;
-                    case Towards.DOWN:
-                        player.PosY += gameRoom.MoveSpeed;
-                        break;
-                    case Towards.RIGHT:
-                        player.PosX += gameRoom.MoveSpeed;
-                        break;
-                    case Towards.LEFT:
-                        player.PosX -= gameRoom.MoveSpeed;
-                        break;
-                }
-                
-                if (player.PosX > gameRoom.SizeX || player.PosX < 0 || player.PosY > gameRoom.SizeY ||
-                    player.PosY < 0)
-                {
-                    player.PosX = posX;
-                    player.PosY = posY;
-                }
-            }
-            HubContext.Clients.Group(gameRoom.Id).SendAsync("update", gameRoom.Players.Values);
+            
+            HubContext.Clients.Group(gameRoom.Id).SendAsync("update", gameRoom.Players.Values, gameRoom.Bullets);
         }
 
         public async Task SendMove(MoveDto move)
@@ -97,6 +71,22 @@ namespace ZombieGame.Business.Hubs
             }
         }
 
+        public async Task FireBullet()
+        {
+            try
+            {
+                var gameRoom = GameRooms[PlayerRoomMap[Context.ConnectionId]];
+
+                var player = gameRoom.Players[Context.ConnectionId];
+                
+                gameRoom.Bullets.Add(new Bullet(player, 20, 20, 0, player.Towards, "", player.PosX, player.PosY));
+            }
+            catch (Exception ex)
+            {
+                await Clients.Caller.SendAsync("onError", "Error : " + ex.Message);
+            }
+            
+        }
         public async Task JoinGame(JoinDto joinDto)
         {
             try
@@ -111,13 +101,14 @@ namespace ZombieGame.Business.Hubs
                 {
                     RoomIntervals[gameRoom.Id] = new Timer(GameLoop, gameRoom.Id, TimeSpan.Zero,
                         TimeSpan.FromMilliseconds(1000 / Tick));
+                    gameRoom.StartThreads();
                 }
                 
                 if (gameRoom.Players.Count < gameRoom.PlayerCount)
                 {
                     await Groups.AddToGroupAsync(Context.ConnectionId, joinDto.RoomId);
                     gameRoom.Players[Context.ConnectionId] = player;
-                    ApplicationContext.FireEvent(this, new JoinOrLeaveEvent());
+                    //ApplicationContext.FireEvent(this, new JoinOrLeaveEvent());
                 }
             }
             catch (Exception ex)
@@ -140,7 +131,7 @@ namespace ZombieGame.Business.Hubs
             {
                 for (var i = 1; i <= 5; ++i)
                 {
-                    var gameRoom = new GameRoom($"Game Room {i}", i*5 , i*5);
+                    var gameRoom = new GameRoom($"Game Room {i}", i*5 , i*5, Tick);
                     GameRooms[gameRoom.Id] = gameRoom;
                 }
             }
@@ -151,13 +142,16 @@ namespace ZombieGame.Business.Hubs
         {
             if (PlayerRoomMap.ContainsKey(Context.ConnectionId) && GameRooms[PlayerRoomMap[Context.ConnectionId]].Players.ContainsKey(Context.ConnectionId))
             {
-                GameRooms[PlayerRoomMap[Context.ConnectionId]].Players.Remove(Context.ConnectionId);
+                var gameRoom = GameRooms[PlayerRoomMap[Context.ConnectionId]];
+
+                gameRoom.Players.Remove(Context.ConnectionId);
                 
-                if (GameRooms[PlayerRoomMap[Context.ConnectionId]].Players.Count == 0)
+                if (gameRoom.Players.Count == 0)
                 {
-                    RoomIntervals.Remove(PlayerRoomMap[Context.ConnectionId]);
-                    
+                    RoomIntervals.Remove(gameRoom.Id);
+                    gameRoom.StopThreads();
                 }
+                
                 PlayerRoomMap.Remove(Context.ConnectionId);
                 ApplicationContext.FireEvent(this, new JoinOrLeaveEvent());
             }

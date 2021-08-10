@@ -1,4 +1,4 @@
-﻿namespace ZombieGame.Business.Hubs.HubModels
+﻿namespace ZombieGame.Business.DTOs.Request
 {
     public class JoinDto
     {

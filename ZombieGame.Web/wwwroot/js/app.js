@@ -13,6 +13,7 @@ const vue = new Vue({
             currentRoom: null,
             gameContext : null,
             players: [],
+            bullets: [],
             player: null,
             playerController: null,
             moveState: null,
@@ -41,11 +42,15 @@ const vue = new Vue({
                 this.connection.on("playerMoveUpdate", (playerMove) => {
                     //console.log(playerMove);
                 });
-                this.connection.on("update", (players) => {
+                this.connection.on("update", (players,bullets) => {
                     this.player = players.find(p => p.name === this.nick);
                     this.players = players.filter(p => p.name !== this.nick);
+                    this.bullets = bullets;
                     window.requestAnimationFrame(this.gameLoop);
                     //console.log(players);
+                });
+                this.connection.on("updateBullets", (bullets) => {
+                    
                 });
             },
             sendMove: function(towards){
@@ -53,6 +58,11 @@ const vue = new Vue({
                 this.connection.invoke("SendMove", towards).then(response => {
                     //console.log(response);
                 })
+            },
+            fireBullet: function(){
+                this.connection.invoke("FireBullet").then(response => {
+                    //console.log(response);
+                });
             },
             joinGame: function(id){
               this.connection.invoke('JoinGame', {name:this.nick, roomId:id}).then(response => {
@@ -100,6 +110,9 @@ const vue = new Vue({
                 let keyState = (event.type === "keydown");
                 let newState = null;
                 switch(event.keyCode) {
+                    case 32:
+                        this.fireBullet();
+                        break;
                     case 37:
                         newState = {towards: 4,keyState: keyState};
                         break;
@@ -132,6 +145,14 @@ const vue = new Vue({
                         if(pX > 0 && pX < 600 && pY > 0 && pY < 600){
                             this.drawPlayer(pX,pY, "#FB0000", p.name);
                         }
+                });
+                
+                this.bullets.forEach(b => {
+                    const pX =  this.player.posX > b.posX ? 300 - (this.player.posX - b.posX) : 300 + (b.posX - this.player.posX);
+                    const pY =  this.player.posY > b.posY ? 300 - (this.player.posY - b.posY) : 300 + (b.posY - this.player.posY);
+                    if(pX > 0 && pX < 600 && pY > 0 && pY < 600){
+                        this.drawBullet(pX,pY);
+                    }
                 });
                 
                 /*
@@ -173,6 +194,12 @@ const vue = new Vue({
               this.gameContext.fillText(nick,x-(metric.width/2) + 5, y+20);
               this.gameContext.fill();
             },
+            drawBullet: function(x,y){
+                this.gameContext.fillStyle = "#000000";
+                this.gameContext.beginPath();
+                this.gameContext.rect(x,y, 3, 3);
+                this.gameContext.fill();
+            }
         },
         mounted: async function () {
                 //console.log(this.viewState);
