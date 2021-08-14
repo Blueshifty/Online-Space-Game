@@ -17,4 +17,4 @@ COPY --from=build /app/publish .
 #No Expose Because Heroku
 #EXPOSE 8080
 
-ENTRYPOINT ["dotnet", "ZombieGame.Web.dll"]
+ENTRYPOINT ["dotnet", "SpaceGame.Web.dll"]
