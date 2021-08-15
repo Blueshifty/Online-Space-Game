@@ -31,6 +31,8 @@ namespace SpaceGame.Business.Game
         
         public int Tick { get; set; }
 
+        public bool Looping { get; set; } = true;
+
         public GameRoom(string name, int playerCount, int size, int tick)
         {
             Name = name;
@@ -51,32 +53,35 @@ namespace SpaceGame.Business.Game
         {
             while (true)
             {
-                foreach (var player in Players.Values.Where(p => p.Towards != Towards.NOWHERE))
+                if (Looping)
                 {
-                    var posX = player.PosX;
-
-                    var posY = player.PosY;
-
-                    switch (player.Towards)
+                    foreach (var player in Players.Values.Where(p => p.Towards != Towards.NOWHERE))
                     {
-                        case Towards.UP:
-                            player.PosY -= player.Speed;
-                            break;
-                        case Towards.DOWN:
-                            player.PosY += player.Speed;
-                            break;
-                        case Towards.RIGHT:
-                            player.PosX += player.Speed;
-                            break;
-                        case Towards.LEFT:
-                            player.PosX -= player.Speed;
-                            break;
-                    }
+                        var posX = player.PosX;
 
-                    if (player.PosX > SizeX || player.PosX < 0 || player.PosY > SizeY || player.PosY < 0)
-                    {
-                        player.PosX = posX;
-                        player.PosY = posY;
+                        var posY = player.PosY;
+
+                        switch (player.Towards)
+                        {
+                            case Towards.UP:
+                                player.PosY -= player.Speed;
+                                break;
+                            case Towards.DOWN:
+                                player.PosY += player.Speed;
+                                break;
+                            case Towards.RIGHT:
+                                player.PosX += player.Speed;
+                                break;
+                            case Towards.LEFT:
+                                player.PosX -= player.Speed;
+                                break;
+                        }
+
+                        if (player.PosX > SizeX || player.PosX < 0 || player.PosY > SizeY || player.PosY < 0)
+                        {
+                            player.PosX = posX;
+                            player.PosY = posY;
+                        }
                     }
                 }
                 Thread.Sleep(1000 / Tick);
@@ -87,29 +92,32 @@ namespace SpaceGame.Business.Game
         {
             while (true)
             {
-                Parallel.ForEach(BulletsDict, bullet =>
+                if (Looping)
                 {
-                    switch (bullet.Value.Towards)
+                    Parallel.ForEach(BulletsDict, bullet =>
                     {
-                        case Towards.UP:
-                            bullet.Value.PosY -= bullet.Value.Speed;
-                            break;
-                        case Towards.DOWN:
-                            bullet.Value.PosY += bullet.Value.Speed;
-                            break;
-                        case Towards.RIGHT:
-                            bullet.Value.PosX += bullet.Value.Speed;
-                            break;
-                        case Towards.LEFT:
-                            bullet.Value.PosX -= bullet.Value.Speed;
-                            break;
-                    }
+                        switch (bullet.Value.Towards)
+                        {
+                            case Towards.UP:
+                                bullet.Value.PosY -= bullet.Value.Speed;
+                                break;
+                            case Towards.DOWN:
+                                bullet.Value.PosY += bullet.Value.Speed;
+                                break;
+                            case Towards.RIGHT:
+                                bullet.Value.PosX += bullet.Value.Speed;
+                                break;
+                            case Towards.LEFT:
+                                bullet.Value.PosX -= bullet.Value.Speed;
+                                break;
+                        }
                     
-                    if (bullet.Value.PosX > SizeX || bullet.Value.PosX < 0 || bullet.Value.PosY > SizeY || bullet.Value.PosY < 0)
-                    {
-                        BulletsDict.TryRemove(bullet.Value.GetHashCode(), out var bulletRemoved);
-                    }
-                });
+                        if (bullet.Value.PosX > SizeX || bullet.Value.PosX < 0 || bullet.Value.PosY > SizeY || bullet.Value.PosY < 0)
+                        {
+                            BulletsDict.TryRemove(bullet.Value.GetHashCode(), out var bulletRemoved);
+                        }
+                    });
+                }
                 Thread.Sleep(1000 / Tick);
             }
         }
@@ -131,9 +139,13 @@ namespace SpaceGame.Business.Game
 
         public void StopThreads()
         {
-            _positionThread.Interrupt();
-            _bulletThread.Interrupt();
-            _planetThread.Interrupt();
+            Looping = false;
         }
+
+        public void ClearResources()
+        {
+            BulletsDict.Clear();
+        }
+        
     }
 }

@@ -19,9 +19,11 @@ namespace SpaceGame.Business.Hubs
     {
         private readonly IMapper _mapper;
         
-        private static int Tick = 100;
+        private static int Tick = 200;
         
-        private static readonly Dictionary<string, Timer> RoomIntervals = new();
+        //private static readonly Dictionary<string, Timer> RoomIntervals = new();
+
+        private static readonly Dictionary<string, Thread> RoomThreads = new();
         
         private static IHubContext<GameHub> HubContext;
         
@@ -32,7 +34,7 @@ namespace SpaceGame.Business.Hubs
             _mapper = mapper;
             HubContext = hubContext;
             ApplicationContext = context;
-            context.ListenEvent(typeof(DisconnectUserEvent), DisconnectUserHandle);
+            //context.ListenEvent(typeof(DisconnectUserEvent), DisconnectUserHandle);
         }
 
 
@@ -44,11 +46,25 @@ namespace SpaceGame.Business.Hubs
             await HubContext.Groups.RemoveFromGroupAsync(@event.DisconnectUser.ConnectionId, @event.DisconnectUser.RoomId);
         }
         
+        /*
         private static void GameLoop(object? state)
         {
             var gameRoom = GameRooms[state.ToString()];
             
             HubContext.Clients.Group(gameRoom.Id).SendAsync("update", gameRoom.Players.Values, gameRoom.BulletsDict.Values);
+        }*/
+
+        private void GameLoop(GameRoom gameRoom)
+        {
+            while (true)
+            {
+                if (gameRoom.Looping)
+                {
+                    HubContext.Clients.Group(gameRoom.Id)
+                        .SendAsync("update", gameRoom.Players.Values, gameRoom.BulletsDict.Values);
+                }
+                Thread.Sleep(1000/ gameRoom.Tick);
+            }
         }
 
         public async Task SendMove(MoveDto move)
@@ -102,13 +118,17 @@ namespace SpaceGame.Business.Hubs
 
                 var gameRoom = GameRooms[joinDto.RoomId];
 
-                if (gameRoom.Players.Count == 0)
+                if (gameRoom.Looping == false)
                 {
-                    RoomIntervals[gameRoom.Id] = new Timer(GameLoop, gameRoom.Id, TimeSpan.Zero,
-                        TimeSpan.FromMilliseconds(1000 / Tick));
+                    gameRoom.Looping = true;
+                }
+                else if (gameRoom.Players.Count == 0)
+                {
+                    RoomThreads[gameRoom.Id] = new Thread(() => GameLoop(gameRoom));
+                    RoomThreads[gameRoom.Id].Start();
                     gameRoom.StartThreads();
                 }
-                
+
                 if (gameRoom.Players.Count < gameRoom.PlayerCount)
                 {
                     await Groups.AddToGroupAsync(Context.ConnectionId, joinDto.RoomId);
@@ -145,22 +165,30 @@ namespace SpaceGame.Business.Hubs
 
         public override Task OnDisconnectedAsync(Exception ex)
         {
-            if (PlayerRoomMap.ContainsKey(Context.ConnectionId) && GameRooms[PlayerRoomMap[Context.ConnectionId]].Players.ContainsKey(Context.ConnectionId))
+            try
             {
-                var gameRoom = GameRooms[PlayerRoomMap[Context.ConnectionId]];
-
-                gameRoom.Players.Remove(Context.ConnectionId);
-                
-                if (gameRoom.Players.Count == 0)
+                if (PlayerRoomMap.ContainsKey(Context.ConnectionId) && GameRooms[PlayerRoomMap[Context.ConnectionId]].Players.ContainsKey(Context.ConnectionId))
                 {
-                    RoomIntervals.Remove(gameRoom.Id);
-                    gameRoom.StopThreads();
-                }
-                
-                PlayerRoomMap.Remove(Context.ConnectionId);
-                ApplicationContext.FireEvent(this, new JoinOrLeaveEvent());
-            }
+                    var gameRoom = GameRooms[PlayerRoomMap[Context.ConnectionId]];
 
+                    gameRoom.Players.Remove(Context.ConnectionId);
+                
+                    if (gameRoom.Players.Count == 0)
+                    {
+                        gameRoom.Looping = false;
+                        //RoomThreads.Remove(gameRoom.Id);
+                    }
+                    Console.WriteLine(gameRoom.Players.Count);
+                
+                    PlayerRoomMap.Remove(Context.ConnectionId);
+                    //ApplicationContext.FireEvent(this, new JoinOrLeaveEvent());
+                }
+            }
+            catch(Exception exception)
+            {
+                Console.WriteLine(exception.StackTrace);
+                Console.WriteLine(exception.Message);
+            }
             return base.OnDisconnectedAsync(ex);
         }
 
