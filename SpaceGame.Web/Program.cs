@@ -21,7 +21,8 @@ namespace SpaceGame.Web
                 .ConfigureWebHostDefaults(webBuilder =>
                 {
                     webBuilder.UseStartup<Startup>();
-                    //webBuilder.UseUrls("http://*:" + Environment.GetEnvironmentVariable("PORT"));
+                    if (Nullable.Equals(Environment.GetEnvironmentVariable("PROD"), "true"))
+                         webBuilder.UseUrls("http://*:" + Environment.GetEnvironmentVariable("PORT"));
                 });
     }
 }
