@@ -11,7 +11,7 @@ RUN dotnet publish -c release -o ./publish
 FROM mcr.microsoft.com/dotnet/aspnet:5.0
 
 WORKDIR /app
-
+ENV PROD=true
 COPY --from=build /app/publish .
 
 #No Expose Because Heroku
