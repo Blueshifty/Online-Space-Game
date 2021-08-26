@@ -1,5 +1,6 @@
 ﻿using SpaceGame.Business.DTOs.Response;
 using SpaceGame.Business.Game;
+using SpaceGame.Business.Game.Projectiles;
 
 namespace SpaceGame.Business.Utilities.Mapper
 {
@@ -8,6 +9,8 @@ namespace SpaceGame.Business.Utilities.Mapper
         public Profiles()
         {
             CreateMap<GameRoom, RoomOnDashboardDto>();
+            CreateMap<Bullet, BulletDto>();
+            CreateMap<Player, PlayerDto>();
         }
     }
 }

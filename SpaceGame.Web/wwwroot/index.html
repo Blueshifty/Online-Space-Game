@@ -10,13 +10,13 @@
     <script src="lib/axios/axios.min.js"></script>
 </head>
 <body>
-    <div class="p-5" id="vue-wrapper">
+    <div class="" id="vue-wrapper">
         <div v-if="viewState==='loading'">
             <h3 class="my-auto mx-auto">
                 Loading...
             </h3>
         </div>
-        <div class="mx-auto mt-2" v-if="viewState==='nick'">
+        <div class="p-5 mx-auto mt-2" v-if="viewState==='nick'">
             <div class="nick-card card mx-auto mt-5">
                 <div class="card-body px-3 text-center">
                     <h5>Enter Nickname:</h5>
@@ -28,7 +28,7 @@
                 </div>
             </div>
         </div>
-        <div class="mx-auto mt-2" v-if="viewState === 'gameRooms'">
+        <div class="p-5 mx-auto mt-2" v-if="viewState === 'gameRooms'">
             <div class="row">
                 <div class="col-xl-8 col-lg-10 col-12 mx-auto">
                     <div class="row mx-3">
@@ -44,8 +44,8 @@
                 </div>
             </div>
         </div>
-        <div class="mx-auto mt-2" v-if="viewState==='inGame'">
-            <div class="row">
+        <div v-if="viewState==='inGame'">
+            <div class="d-flex full-fill" id="canvas-wrapper">
                 <canvas class="mx-auto"></canvas>
             </div>
         </div>

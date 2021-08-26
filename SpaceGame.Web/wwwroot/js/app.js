@@ -17,6 +17,8 @@ const vue = new Vue({
             player: null,
             playerController: null,
             moveState: null,
+            canvasHeight: 0,
+            canvasWidth: 0
         },
         methods: {
             startConnection: async function () {
@@ -97,14 +99,24 @@ const vue = new Vue({
                 await this.startConnection();
             },
             initGame: function(){
+                window.addEventListener("resize", () => {
+                    this.refreshGameScreen();
+                });
                 this.gameContext = document.querySelector("canvas").getContext("2d");
-                this.gameContext.canvas.height = 600;
-                this.gameContext.canvas.width = 600;
-                this.gameContext.canvas.style.height = "600px";
-                this.gameContext.canvas.style.width = "600px";
+                this.refreshGameScreen();
+                this.gameContext.canvas.height = this.canvasHeight;
+                this.gameContext.canvas.width = this.canvasWidth;
+                this.gameContext.canvas.style.height = this.canvasHeight +  'px';
+                this.gameContext.canvas.style.width = this.canvasWidth + 'px';
                 this.gameContext.font = "10px Arial";
                 window.addEventListener("keydown", this.keyListener)
                 window.addEventListener("keyup", this.keyListener);
+            },
+            refreshGameScreen: function(){
+                let wrapperElement = document.getElementById('canvas-wrapper');
+                let wrapperSizeData= wrapperElement.getBoundingClientRect();
+                this.canvasHeight = wrapperSizeData.height;
+                this.canvasWidth = wrapperSizeData.width;
             },
             keyListener : function(event){
                 let keyState = (event.type === "keydown");
@@ -132,25 +144,24 @@ const vue = new Vue({
                 }
             },
             gameLoop: function(){
-                
                 this.gameContext.fillStyle = "#F7F7F7";
                 
-                this.gameContext.fillRect(0,0,600,600);
+                this.gameContext.fillRect(0,0,this.canvasWidth,this.canvasHeight);
                 
-                this.drawPlayer(300,300, "#98DEFF", this.nick);
+                this.drawPlayer(this.canvasWidth/2, this.canvasHeight/2, "#98DEFF", this.nick);
                 
                 this.players.forEach(p => {
-                       const pX =  this.player.posX > p.posX ? 300 - (this.player.posX - p.posX) : 300 + (p.posX - this.player.posX);
-                       const pY =  this.player.posY > p.posY ? 300 - (this.player.posY - p.posY) : 300 + (p.posY - this.player.posY);
-                        if(pX > 0 && pX < 600 && pY > 0 && pY < 600){
+                       const pX =  this.player.posX > p.posX ? this.canvasWidth / 2 - (this.player.posX - p.posX) : this.canvasWidth / 2 + (p.posX - this.player.posX);
+                       const pY =  this.player.posY > p.posY ? this.canvasHeight / 2 - (this.player.posY - p.posY) : this.canvasHeight / 2 + (p.posY - this.player.posY);
+                        if(pX > 0 && pX < this.canvasWidth && pY > 0 && pY < this.canvasHeight){
                             this.drawPlayer(pX,pY, "#FB0000", p.name);
                         }
                 });
                 
                 this.bullets.forEach(b => {
-                    const pX =  this.player.posX > b.posX ? 300 - (this.player.posX - b.posX) : 300 + (b.posX - this.player.posX);
-                    const pY =  this.player.posY > b.posY ? 300 - (this.player.posY - b.posY) : 300 + (b.posY - this.player.posY);
-                    if(pX > 0 && pX < 600 && pY > 0 && pY < 600){
+                    const pX =  this.player.posX > b.posX ? this.canvasWidth / 2 - (this.player.posX - b.posX) : this.canvasWidth / 2 + (b.posX - this.player.posX);
+                    const pY =  this.player.posY > b.posY ? this.canvasHeight / 2 - (this.player.posY - b.posY) : this.canvasHeight / 2 + (b.posY - this.player.posY);
+                    if(pX > 0 && pX < this.canvasWidth && pY > 0 && pY < this.canvasHeight){
                         this.drawBullet(pX,pY);
                     }
                 });
@@ -159,30 +170,30 @@ const vue = new Vue({
                  Sınırları cizen kod
                  */
                 this.gameContext.beginPath();
-                let x1 = 300 - this.player.posX;
-                let y1= 300 - this.player.posY;
+                let x1 = this.canvasWidth / 2 - this.player.posX;
+                let y1= this.canvasHeight / 2 - this.player.posY;
                 
-                if(this.player.posY <= 300){
+                if(this.player.posY <= this.canvasHeight / 2){
                     this.gameContext.moveTo(x1 > 0 ? x1 : 0, y1);
-                    this.gameContext.lineTo((this.currentRoom.sizeX - this.player.posX) + 310,y1);
+                    this.gameContext.lineTo((this.currentRoom.sizeX - this.player.posX) + ((this.canvasHeight / 2) + 10),y1);
                     this.gameContext.stroke();
                 }
                 
-                if(this.player.posX <= 300){
+                if(this.player.posX <= this.canvasWidth / 2){
                     this.gameContext.moveTo(x1, y1 > 0 ? y1 : 0);
-                    this.gameContext.lineTo(x1,(this.currentRoom.sizeY - this.player.posY) + 310);
+                    this.gameContext.lineTo(x1,(this.currentRoom.sizeY - this.player.posY) + ((this.canvasWidth / 2) + 10));
                     this.gameContext.stroke();
                 }
                 
-                if((this.currentRoom.sizeX - this.player.posX) <= 300){
-                    this.gameContext.moveTo(this.currentRoom.sizeX - this.player.posX + 310, y1 > 0 ? y1 : 0);
-                    this.gameContext.lineTo(this.currentRoom.sizeX -this.player.posX + 310, (this.currentRoom.sizeY - this.player.posY) + 310);
+                if((this.currentRoom.sizeX - this.player.posX) <= this.canvasWidth / 2){
+                    this.gameContext.moveTo(this.currentRoom.sizeX - this.player.posX + ((this.canvasWidth / 2) + 10), y1 > 0 ? y1 : 0);
+                    this.gameContext.lineTo(this.currentRoom.sizeX -this.player.posX + ((this.canvasWidth / 2) + 10), (this.currentRoom.sizeY - this.player.posY) + ((this.canvasHeight / 2) + 10));
                     this.gameContext.stroke();
                 }
                 
-                if((this.currentRoom.sizeY - this.player.posY) <= 300) {
-                    this.gameContext.moveTo(x1 > 0 ? x1: 0, (this.currentRoom.sizeY - this.player.posY) +310);
-                    this.gameContext.lineTo((this.currentRoom.sizeX - this.player.posX) + 310, (this.currentRoom.sizeY - this.player.posY) + 310);
+                if((this.currentRoom.sizeY - this.player.posY) <= this.canvasHeight / 2) {
+                    this.gameContext.moveTo(x1 > 0 ? x1: 0, (this.currentRoom.sizeY - this.player.posY) +((this.canvasHeight / 2) + 10));
+                    this.gameContext.lineTo((this.currentRoom.sizeX - this.player.posX) + ((this.canvasWidth / 2) + 10), (this.currentRoom.sizeY - this.player.posY) + ((this.canvasHeight / 2) + 10));
                     this.gameContext.stroke();
                 }
             },
