@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -10,6 +9,8 @@ using SpaceGame.Business.DTOs.Event;
 using SpaceGame.Business.DTOs.Request;
 using SpaceGame.Business.DTOs.Response;
 using SpaceGame.Business.Game;
+using SpaceGame.Business.Game.Consumables;
+using SpaceGame.Business.Game.Planets;
 using SpaceGame.Business.Game.Projectiles;
 using SpaceGame.Business.Utilities.Mapper;
 using static SpaceGame.Business.Game.Dictionaries;
@@ -20,7 +21,7 @@ namespace SpaceGame.Business.Hubs
     {
         private readonly IMapper _mapper;
 
-        private static int Tick = 60;
+        private static int Tick = 200;
         
         //private static readonly Dictionary<string, Timer> RoomIntervals = new();
 
@@ -66,7 +67,15 @@ namespace SpaceGame.Business.Hubs
                     HubContext.Clients.Group(gameRoom.Id)
                         .SendAsync("update",
                             _mapper.Map<List<Player>, List<PlayerDto>>(gameRoom.Players.Values.ToList()),
-                            _mapper.Map<List<Bullet>, List<BulletDto>>(gameRoom.BulletsDict.Values.ToList()));
+                            _mapper.Map<List<Bullet>, List<BulletDto>>(gameRoom.Bullets.Values.ToList()),
+                            _mapper.Map<List<Planet>, List<PlanetDto>>(gameRoom.Planets[0].Values.ToList()),
+                            _mapper.Map<List<Planet>, List<PlanetDto>>(gameRoom.Planets[1].Values.ToList()),
+                            _mapper.Map<List<Planet>, List<PlanetDto>>(gameRoom.Planets[2].Values.ToList()),
+                            _mapper.Map<List<Planet>, List<PlanetDto>>(gameRoom.Planets[3].Values.ToList()),
+                            _mapper.Map<List<Consumable>, List<ConsumableDto>>(gameRoom.Consumables[0].Values.ToList()),
+                            _mapper.Map<List<Consumable>, List<ConsumableDto>>(gameRoom.Consumables[1].Values.ToList()),
+                            _mapper.Map<List<Consumable>, List<ConsumableDto>>(gameRoom.Consumables[2].Values.ToList())
+                        );
                 }
                 Thread.Sleep(1000 / gameRoom.Tick);
             }
@@ -100,11 +109,12 @@ namespace SpaceGame.Business.Hubs
 
                 var player = gameRoom.Players[Context.ConnectionId];
 
-                if (player.Towards != Towards.NOWHERE)
+                if (player.Towards != Towards.NOWHERE && player.AmmoCount > 0)
                 {
-                    var bullet = new Bullet(Context.ConnectionId, 5, 20, 0, player.Towards, "", player.PosX,
+                    player.AmmoCount -= 1;
+                    var bullet = new Bullet(Context.ConnectionId, 15, 20, 0, player.Towards, "", player.PosX,
                         player.PosY);
-                    gameRoom.BulletsDict.TryAdd(bullet.GetHashCode(), bullet);
+                    gameRoom.Bullets.TryAdd(bullet.GetHashCode(), bullet);
                 }
             }
             catch (Exception ex)

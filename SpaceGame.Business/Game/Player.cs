@@ -12,11 +12,17 @@
         public int Speed { get; set; } = 10;
         
         public int SpeedLimit { get; set; }
-        
-        public int Health { get; set;}
-        
-        public int HealthLimit { get; set;}
-        
+
+        public int Health { get; set; } = 100;
+
+        public int HealthLimit { get; set; } = 100;
+
+        public int AmmoLimit { get; set; } = 300;
+
+        public int AmmoCount { get; set; } = 100;
+
+        public int Stardust { get; set; } = 0;
+
         public Player(string name)
         {
             Towards = Towards.NOWHERE;

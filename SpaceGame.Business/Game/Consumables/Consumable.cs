@@ -8,5 +8,13 @@
         {
             Amount = amount;
         }
+
+        public virtual void Consume(Player player)
+        {
+            /*
+             * What happens when player consumes it ?
+             */
+        }
+        
     }
 }

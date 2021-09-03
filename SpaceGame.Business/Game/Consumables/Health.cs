@@ -8,5 +8,15 @@
         public Health(int posX, int posY, int amount) : base(posX, posY, amount)
         {
         }
+
+        public override void Consume(Player player)
+        {
+            player.Health += Amount;
+
+            if (player.Health > player.HealthLimit)
+            {
+                player.Health = player.HealthLimit;
+            }
+        }
     }
 }

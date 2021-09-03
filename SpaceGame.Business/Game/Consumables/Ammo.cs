@@ -10,5 +10,14 @@
         public Ammo(int posX, int posY, int amount) : base(posX, posY,amount)
         {
         }
+
+        public override void Consume(Player player)
+        {
+            player.AmmoCount += Amount;
+            if (player.AmmoCount > player.AmmoLimit)
+            {
+                player.AmmoCount = player.AmmoLimit;
+            }
+        }
     }
 }

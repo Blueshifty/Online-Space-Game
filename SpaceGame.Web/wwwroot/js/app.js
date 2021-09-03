@@ -14,6 +14,13 @@ const vue = new Vue({
             gameContext : null,
             players: [],
             bullets: [],
+            jupiters: [],
+            saturns: [],
+            marses: [],
+            venuses: [],
+            stardusts: [],
+            healths: [],
+            ammos: [],
             player: null,
             playerController: null,
             moveState: null,
@@ -44,10 +51,16 @@ const vue = new Vue({
                 this.connection.on("playerMoveUpdate", (playerMove) => {
                     //console.log(playerMove);
                 });
-                this.connection.on("update", (players,bullets) => {
+                this.connection.on("update", (players,bullets,jupiters, saturns, marses, venuses, stardusts, healths, ammos) => {
                     this.player = players.find(p => p.name === this.nick);
                     this.players = players.filter(p => p.name !== this.nick);
                     this.bullets = bullets;
+                    this.jupiters = jupiters;
+                    this.marses = marses;
+                    this.venuses = venuses;
+                    this.stardusts = stardusts;
+                    this.healths = healths;
+                    this.ammos = ammos;
                     window.requestAnimationFrame(this.gameLoop);
                     //console.log(players);
                 });
@@ -88,7 +101,7 @@ const vue = new Vue({
                     this.getGameRooms();
                 }
             },
-            initSignalRConnection: async function () {
+            initSignalRConnection: async function () { 
                 this.connection = new signalR.HubConnectionBuilder().withUrl("/gameHub")
                     .configureLogging(signalR.LogLevel.Information).build();
 
@@ -104,10 +117,6 @@ const vue = new Vue({
                 });
                 this.gameContext = document.querySelector("canvas").getContext("2d");
                 this.refreshGameScreen();
-                this.gameContext.canvas.height = this.canvasHeight;
-                this.gameContext.canvas.width = this.canvasWidth;
-                this.gameContext.canvas.style.height = this.canvasHeight +  'px';
-                this.gameContext.canvas.style.width = this.canvasWidth + 'px';
                 this.gameContext.font = "10px Arial";
                 window.addEventListener("keydown", this.keyListener)
                 window.addEventListener("keyup", this.keyListener);
@@ -117,6 +126,10 @@ const vue = new Vue({
                 let wrapperSizeData= wrapperElement.getBoundingClientRect();
                 this.canvasHeight = wrapperSizeData.height;
                 this.canvasWidth = wrapperSizeData.width;
+                this.gameContext.canvas.height = this.canvasHeight;
+                this.gameContext.canvas.width = this.canvasWidth;
+                this.gameContext.canvas.style.height = this.canvasHeight +  'px';
+                this.gameContext.canvas.style.width = this.canvasWidth + 'px';
             },
             keyListener : function(event){
                 let keyState = (event.type === "keydown");
@@ -144,31 +157,35 @@ const vue = new Vue({
                 }
             },
             gameLoop: function(){
-                this.gameContext.fillStyle = "#F7F7F7";
+                
+                if(this.player.health <= 0){
+                    this.connection.stop();
+                    this.viewState = 'gameOver';
+                    return;
+                }
+                
+                this.gameContext.fillStyle = "#ffffff";
                 
                 this.gameContext.fillRect(0,0,this.canvasWidth,this.canvasHeight);
                 
                 this.drawPlayer(this.canvasWidth/2, this.canvasHeight/2, "#98DEFF", this.nick);
                 
-                this.players.forEach(p => {
-                       const pX =  this.player.posX > p.posX ? this.canvasWidth / 2 - (this.player.posX - p.posX) : this.canvasWidth / 2 + (p.posX - this.player.posX);
-                       const pY =  this.player.posY > p.posY ? this.canvasHeight / 2 - (this.player.posY - p.posY) : this.canvasHeight / 2 + (p.posY - this.player.posY);
-                        if(pX > 0 && pX < this.canvasWidth && pY > 0 && pY < this.canvasHeight){
-                            this.drawPlayer(pX,pY, "#FB0000", p.name);
-                        }
-                });
+                this.checkAndDraw(this.players,0);
                 
-                this.bullets.forEach(b => {
-                    const pX =  this.player.posX > b.posX ? this.canvasWidth / 2 - (this.player.posX - b.posX) : this.canvasWidth / 2 + (b.posX - this.player.posX);
-                    const pY =  this.player.posY > b.posY ? this.canvasHeight / 2 - (this.player.posY - b.posY) : this.canvasHeight / 2 + (b.posY - this.player.posY);
-                    if(pX > 0 && pX < this.canvasWidth && pY > 0 && pY < this.canvasHeight){
-                        this.drawBullet(pX,pY);
-                    }
-                });
+                this.checkAndDraw(this.bullets,1);
+                
+                this.checkAndDraw(this.jupiters,2);
+                
+                this.checkAndDraw(this.stardusts, 5);
+                
+                this.checkAndDraw(this.healths, 6);
+                
+                this.checkAndDraw(this.ammos,7);
                 
                 /*
                  Sınırları cizen kod
                  */
+                
                 this.gameContext.beginPath();
                 let x1 = this.canvasWidth / 2 - this.player.posX;
                 let y1= this.canvasHeight / 2 - this.player.posY;
@@ -196,6 +213,23 @@ const vue = new Vue({
                     this.gameContext.lineTo((this.currentRoom.sizeX - this.player.posX) + ((this.canvasWidth / 2) + 10), (this.currentRoom.sizeY - this.player.posY) + ((this.canvasHeight / 2) + 10));
                     this.gameContext.stroke();
                 }
+                
+                this.drawMenu();
+            },
+            drawMenu: function(){
+                this.gameContext.fillStyle = "#000000";
+                this.gameContext.font = "20px Arial";
+                this.gameContext.beginPath();
+                const hpText = 'HP:' + this.player.health+ '/'+ this.player.healthLimit;
+                const hpMetric = this.gameContext.measureText(hpText);
+                this.gameContext.fillText(hpText,20, this.canvasHeight-20);
+                const ammoText = 'Ammo:'+this.player.ammoCount+'/'+this.player.ammoLimit;
+                const ammoMetric = this.gameContext.measureText(ammoText);
+                this.gameContext.fillText(ammoText, 30+hpMetric.width, this.canvasHeight-20);
+                const starDustText = 'Stardust:'+this.player.starDust;
+                this.gameContext.fillText(starDustText,40+hpMetric.width+ammoMetric.width, this.canvasHeight-20);
+                this.gameContext.fill();
+                this.gameContext.font = "10px Arial";
             },
             drawPlayer: function(x,y,color, nick){
               this.gameContext.fillStyle = color;
@@ -210,7 +244,55 @@ const vue = new Vue({
                 this.gameContext.beginPath();
                 this.gameContext.rect(x,y, 3, 3);
                 this.gameContext.fill();
-            }
+            },
+            drawJupiter(x,y){
+                this.gameContext.fillStyle = "#EAF321";
+                this.gameContext.beginPath();
+                this.gameContext.rect(x,y, 20, 20);
+                this.gameContext.fill();
+            },
+            drawConsumable(x,y,amount, type){
+                this.gameContext.fillStyle = type === 'Stardust' ? "#4FFAFD" : type === 'Ammo'  ? "#FFA02E" : "#F91D2A"; 
+                this.gameContext.beginPath();
+                this.gameContext.rect(x,y,5,5);
+                const text = amount + "x " + type;
+                const metric = this.gameContext.measureText(text);
+                this.gameContext.fillText(text, x-(metric.width/2) + 5, y+20);
+                this.gameContext.fill();
+            },
+            checkAndDraw(objects, type){
+                objects.forEach(o => {
+                    const pX =  this.player.posX > o.posX ? this.canvasWidth / 2 - (this.player.posX - o.posX) : this.canvasWidth / 2 + (o.posX - this.player.posX);
+                    const pY =  this.player.posY > o.posY ? this.canvasHeight / 2 - (this.player.posY - o.posY) : this.canvasHeight / 2 + (o.posY - this.player.posY);
+                    if(pX > 0 && pX < this.canvasWidth && pY > 0 && pY < this.canvasHeight){
+                        switch(type){
+                            case 0:
+                                this.drawPlayer(pX,pY,"#FB0000", o.name);
+                                break;
+                            case 1:
+                                this.drawBullet(pX,pY);
+                                break;
+                            case 2:
+                                this.drawJupiter(pX,pY);
+                                break;
+                            case 3:
+                            case 4:
+                            case 5:
+                                this.drawConsumable(pX,pY,o.amount, 'Stardust');
+                                break;
+                            case 6:
+                                this.drawConsumable(pX,pY,o.amount, 'Health');
+                                break;
+                            case 7:
+                                this.drawConsumable(pX,pY,o.amount, 'Ammo');
+                                break;
+                            default:
+                                break;
+                        }
+                    }
+                });
+            },
+            
         },
         mounted: async function () {
                 //console.log(this.viewState);
