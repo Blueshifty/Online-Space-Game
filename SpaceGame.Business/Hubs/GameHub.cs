@@ -21,7 +21,7 @@ namespace SpaceGame.Business.Hubs
     {
         private readonly IMapper _mapper;
 
-        private static int Tick = 200;
+        private static int Tick = 60;
         
         //private static readonly Dictionary<string, Timer> RoomIntervals = new();
 
