@@ -4,6 +4,8 @@
     {
         public int Amount { get; set; }
 
+        public byte ConsumableIndex {get; set;}
+
         protected Consumable(int posX, int posY, int amount) : base(posX, posY)
         {
             Amount = amount;

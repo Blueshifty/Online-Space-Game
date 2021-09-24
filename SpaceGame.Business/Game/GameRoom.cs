@@ -19,7 +19,9 @@ namespace SpaceGame.Business.Game
         public int SizeX { get; set; }
         public int SizeY { get; set; }
         public string Name { get; set; }
+
         public Dictionary<string, Player> Players { get; set; }
+        
         public ConcurrentDictionary<int, Bullet> Bullets { get; set; }
 
         public List<ConcurrentDictionary<int, Consumable>> Consumables { get; set; }
@@ -157,6 +159,7 @@ namespace SpaceGame.Business.Game
                             var collidedPlanet = planetDict.Values.FirstOrDefault(p =>
                                 (p.PosX <= bullet.Value.PosX && p.PosX + 20 >= bullet.Value.PosX) &&
                                 (p.PosY <= bullet.Value.PosY && p.PosY + 20 >= bullet.Value.PosY));
+                                
                             if (collidedPlanet != null)
                             {
                                 collidedPlanet.Health -= bullet.Value.Damage;
@@ -164,16 +167,7 @@ namespace SpaceGame.Business.Game
                                 {
                                     foreach (var consumable in collidedPlanet.Consumables)
                                     {
-                                        if (consumable.GetType() == typeof(Stardust))
-                                        {
-                                            Consumables[0].TryAdd(consumable.GetHashCode(), consumable);
-                                        }else if (consumable.GetType() == typeof(Health))
-                                        {
-                                            Consumables[1].TryAdd(consumable.GetHashCode(), consumable);
-                                        }else if (consumable.GetType() == typeof(Ammo))
-                                        {
-                                            Consumables[2].TryAdd(consumable.GetHashCode(), consumable);
-                                        }
+                                        Consumables[consumable.ConsumableIndex].TryAdd(consumable.GetHashCode(), consumable);
                                     }
                                     Planets.First().TryRemove(collidedPlanet.GetHashCode(), out collidedPlanet);
                                 }
@@ -233,25 +227,6 @@ namespace SpaceGame.Business.Game
             }
         }
         
-        
-        /*
-        
-        Planetler için generic function olsun istedim ama verimli değil.
-        
-        private void CheckPlanet(Type planetType)
-        {
-            var count = PlanetsDict.Values.Count(p => p.GetType() == planetType);
-
-            var spawnCount = int.Parse(planetType.GetField("Count").GetValue(null).ToString());
-
-            for (var i = 0; i < spawnCount; ++i)
-            {
-                var planet = Activator.CreateInstance(planetType);
-                
-            }
-        }
-        */
-
         public void StartThreads()
         {
             _positionThread.Start();

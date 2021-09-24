@@ -5,6 +5,7 @@
         public string Name { get; set; }
         public int PosX { get; set;}
         public int PosY { get; set; }
+        
         public Towards Towards { get; set;}
         
         public int TowardsAngle { get; set; }

@@ -1,13 +1,10 @@
 ﻿namespace SpaceGame.Business.Game.Consumables
 {
     public class Stardust : Consumable
-    {
-        public static string Name = "Stardust";
-
-        public static string Sprite = "";
-        
+    {        
         public Stardust(int posX, int posY, int amount) : base(posX, posY, amount)
         {
+            ConsumableIndex = 0;
         }
 
         public override void Consume(Player player)
