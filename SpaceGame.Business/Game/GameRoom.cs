@@ -43,8 +43,8 @@ namespace SpaceGame.Business.Game
             Name = name;
             Id = Guid.NewGuid().ToString();
             PlayerCount = playerCount;
-            SizeX = size * 100;
-            SizeY = size * 100;
+            SizeX = size * 200;
+            SizeY = size * 200;
             Tick = tick;
             
             Players = new Dictionary<string, Player>();
